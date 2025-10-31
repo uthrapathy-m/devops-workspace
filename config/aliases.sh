@@ -340,6 +340,17 @@ alias mkdir='mkdir -pv'
 alias bashrc='${EDITOR:-vim} ~/.bashrc'
 alias vimrc='${EDITOR:-vim} ~/.vimrc'
 
+# Alias cheatsheet
+if [[ -f "$HOME/.devops-workspace/ALIAS_CHEATSHEET.md" ]]; then
+    if command -v bat &> /dev/null; then
+        alias cheat='bat --style=grid,numbers --language=markdown "$HOME/.devops-workspace/ALIAS_CHEATSHEET.md"'
+    elif command -v batcat &> /dev/null; then
+        alias cheat='batcat --style=grid,numbers --language=markdown "$HOME/.devops-workspace/ALIAS_CHEATSHEET.md"'
+    else
+        alias cheat='less "$HOME/.devops-workspace/ALIAS_CHEATSHEET.md"'
+    fi
+fi
+
 # ============================================================================
 # CI/CD & GitHub Aliases
 # ============================================================================

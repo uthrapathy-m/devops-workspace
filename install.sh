@@ -166,6 +166,15 @@ setup_aliases() {
         cp "$shell_rc" "${shell_rc}.backup.$(date +%Y%m%d_%H%M%S)"
     fi
 
+    # Create .devops-workspace directory for configs
+    mkdir -p "$HOME/.devops-workspace"
+
+    # Copy cheatsheet
+    if [[ -f "${SCRIPT_DIR}/config/ALIAS_CHEATSHEET.md" ]]; then
+        cp "${SCRIPT_DIR}/config/ALIAS_CHEATSHEET.md" "$HOME/.devops-workspace/ALIAS_CHEATSHEET.md"
+        log_success "Installed alias cheatsheet (type 'cheat' to view)"
+    fi
+
     # Add source line for aliases if not already present
     if ! grep -q "source.*devops-workspace.*aliases.sh" "$shell_rc" 2>/dev/null; then
         echo "" >> "$shell_rc"
@@ -286,6 +295,7 @@ main() {
     log_info "Please restart your shell or run: source ~/.bashrc"
     echo ""
     log_info "View installed tools: cat $INSTALL_LOG"
+    log_info "View alias cheatsheet: cheat"
     log_info "Test your aliases: alias | grep -E 'kubectl|docker|terraform'"
     echo ""
 }
