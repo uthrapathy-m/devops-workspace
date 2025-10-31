@@ -146,14 +146,8 @@ cleanup_temp_dir() {
 # Add to PATH in shell rc file
 add_to_path() {
     local new_path=$1
-    local shell_rc
-    
-    if [[ -n "$ZSH_VERSION" ]] || [[ -f "$HOME/.zshrc" ]]; then
-        shell_rc="$HOME/.zshrc"
-    else
-        shell_rc="$HOME/.bashrc"
-    fi
-    
+    local shell_rc="$HOME/.bashrc"
+
     if ! grep -q "export PATH.*$new_path" "$shell_rc" 2>/dev/null; then
         echo "export PATH=\"$new_path:\$PATH\"" >> "$shell_rc"
         log_success "Added $new_path to PATH in $shell_rc"

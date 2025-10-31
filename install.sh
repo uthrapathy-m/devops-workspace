@@ -158,19 +158,14 @@ install_category() {
 
 setup_aliases() {
     log_info "Setting up DevOps aliases..."
-    
-    local shell_rc
-    if [[ -n "$ZSH_VERSION" ]] || [[ -f "$HOME/.zshrc" ]]; then
-        shell_rc="$HOME/.zshrc"
-    else
-        shell_rc="$HOME/.bashrc"
-    fi
-    
+
+    local shell_rc="$HOME/.bashrc"
+
     # Backup existing rc file
     if [[ -f "$shell_rc" ]]; then
         cp "$shell_rc" "${shell_rc}.backup.$(date +%Y%m%d_%H%M%S)"
     fi
-    
+
     # Add source line for aliases if not already present
     if ! grep -q "source.*devops-workspace.*aliases.sh" "$shell_rc" 2>/dev/null; then
         echo "" >> "$shell_rc"
@@ -288,7 +283,7 @@ main() {
     echo -e "${GREEN}║                                                           ║${NC}"
     echo -e "${GREEN}╚═══════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    log_info "Please restart your shell or run: source ~/.bashrc (or ~/.zshrc)"
+    log_info "Please restart your shell or run: source ~/.bashrc"
     echo ""
     log_info "View installed tools: cat $INSTALL_LOG"
     log_info "Test your aliases: alias | grep -E 'kubectl|docker|terraform'"

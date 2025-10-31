@@ -102,12 +102,12 @@ remove_configs() {
 
 remove_shell_modifications() {
     log_info "Removing shell modifications..."
-    
-    for rc_file in "$HOME/.bashrc" "$HOME/.zshrc"; do
+
+    for rc_file in "$HOME/.bashrc"; do
         if [[ -f "$rc_file" ]]; then
             # Create backup
             cp "$rc_file" "${rc_file}.backup-$(date +%Y%m%d_%H%M%S)"
-            
+
             # Remove our additions
             sed -i '/# DevOps Workspace Aliases/d' "$rc_file"
             sed -i '\|devops-workspace.*aliases\.sh|d' "$rc_file"

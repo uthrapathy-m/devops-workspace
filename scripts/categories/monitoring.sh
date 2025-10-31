@@ -143,8 +143,45 @@ install_all_monitoring_tools() {
 
 install_stern() {
     log_info "Installing stern..."
-    
-    install_from_github_release "stern/stern" "stern" "stern_{version}_{os}_{arch}.tar.gz"
+
+    local version=$(get_latest_github_release "stern/stern")
+    if [[ -z "$version" ]]; then
+        log_error "Failed to get stern version"
+        return 1
+    fi
+
+    local arch=$(get_arch)
+    local os=$(get_os_type)
+
+    # stern uses different naming: stern_X.Y.Z_linux_amd64.tar.gz (version without 'v')
+    local version_num="${version#v}"
+    local tar_url="https://github.com/stern/stern/releases/download/${version}/stern_${version_num}_${os}_${arch}.tar.gz"
+
+    log_info "Downloading from: $tar_url"
+
+    local temp_dir=$(create_temp_dir)
+    curl -fsSL "$tar_url" -o "$temp_dir/stern.tar.gz"
+
+    if [[ ! -f "$temp_dir/stern.tar.gz" || ! -s "$temp_dir/stern.tar.gz" ]]; then
+        log_error "Failed to download stern"
+        cleanup_temp_dir "$temp_dir"
+        return 1
+    fi
+
+    tar -xzf "$temp_dir/stern.tar.gz" -C "$temp_dir"
+
+    # Find stern binary
+    local stern_bin=$(find "$temp_dir" -name "stern" -type f | head -n1)
+    if [[ -z "$stern_bin" ]]; then
+        log_error "stern binary not found in archive"
+        cleanup_temp_dir "$temp_dir"
+        return 1
+    fi
+
+    sudo install -m 755 "$stern_bin" /usr/local/bin/stern
+    cleanup_temp_dir "$temp_dir"
+
+    verify_installation stern
 }
 
 install_ctop() {

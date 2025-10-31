@@ -325,7 +325,6 @@ alias rm='rm -i'
 alias mkdir='mkdir -pv'
 
 # Quick edits
-alias zshrc='${EDITOR:-vim} ~/.zshrc'
 alias bashrc='${EDITOR:-vim} ~/.bashrc'
 alias vimrc='${EDITOR:-vim} ~/.vimrc'
 

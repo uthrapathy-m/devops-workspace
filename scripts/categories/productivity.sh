@@ -27,7 +27,6 @@ select_productivity_tools() {
 
     local tools=(
         "tmux:tmux:install_tmux"
-        "zsh:zsh:install_zsh"
         "fzf:fzf:install_fzf"
         "ripgrep:rg:install_ripgrep"
         "bat:bat:install_bat"
@@ -37,6 +36,8 @@ select_productivity_tools() {
         "yq:yq:install_yq"
         "neovim:nvim:install_neovim"
         "ncdu:ncdu:install_ncdu"
+        "duf:duf:install_duf"
+        "lazydocker:lazydocker:install_lazydocker"
         "tldr:tldr:install_tldr"
     )
 
@@ -133,11 +134,6 @@ install_all_productivity_tools() {
         install_tmux
     fi
 
-    # zsh
-    if ! is_installed zsh; then
-        install_zsh
-    fi
-
     # fzf (fuzzy finder)
     if ! is_installed fzf; then
         install_fzf
@@ -183,6 +179,16 @@ install_all_productivity_tools() {
         install_ncdu
     fi
 
+    # duf (disk usage/free)
+    if ! is_installed duf; then
+        install_duf
+    fi
+
+    # lazydocker (Docker TUI)
+    if ! is_installed lazydocker; then
+        install_lazydocker
+    fi
+
     # tldr (simplified man pages)
     if ! is_installed tldr; then
         install_tldr
@@ -195,29 +201,17 @@ install_tmux() {
     verify_installation tmux
 }
 
-install_zsh() {
-    log_info "Installing zsh..."
-    install_package zsh
-    verify_installation zsh
-    
-    # Install oh-my-zsh
-    if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-        log_info "Installing oh-my-zsh..."
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    fi
-}
-
 install_fzf() {
     log_info "Installing fzf..."
-    
+
     # Clone fzf repository
     if [[ ! -d "$HOME/.fzf" ]]; then
         git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
-        "$HOME/.fzf/install" --all --no-bash --no-fish
+        "$HOME/.fzf/install" --all --no-fish
     else
         log_info "fzf already installed"
     fi
-    
+
     verify_installation fzf
 }
 
@@ -364,9 +358,122 @@ install_ncdu() {
     verify_installation ncdu
 }
 
+install_duf() {
+    log_info "Installing duf..."
+
+    local version=$(get_latest_github_release "muesli/duf")
+    if [[ -z "$version" ]]; then
+        log_error "Failed to get duf version"
+        return 1
+    fi
+
+    local arch=$(get_arch)
+    local os=$(get_os_type)
+
+    case "$OS_FAMILY" in
+        debian)
+            local deb_url="https://github.com/muesli/duf/releases/download/${version}/duf_${version#v}_${os}_${arch}.deb"
+            log_info "Downloading from: $deb_url"
+
+            curl -fsSL "$deb_url" -o /tmp/duf.deb
+            if [[ ! -f /tmp/duf.deb || ! -s /tmp/duf.deb ]]; then
+                log_error "Failed to download duf"
+                return 1
+            fi
+            sudo dpkg -i /tmp/duf.deb
+            rm /tmp/duf.deb
+            ;;
+        redhat)
+            local rpm_url="https://github.com/muesli/duf/releases/download/${version}/duf_${version#v}_${os}_${arch}.rpm"
+            log_info "Downloading from: $rpm_url"
+
+            curl -fsSL "$rpm_url" -o /tmp/duf.rpm
+            if [[ ! -f /tmp/duf.rpm || ! -s /tmp/duf.rpm ]]; then
+                log_error "Failed to download duf"
+                return 1
+            fi
+            sudo $PKG_MANAGER install -y /tmp/duf.rpm
+            rm /tmp/duf.rpm
+            ;;
+        *)
+            # Manual installation from tar.gz
+            local tar_url="https://github.com/muesli/duf/releases/download/${version}/duf_${version#v}_${os}_${arch}.tar.gz"
+            log_info "Downloading from: $tar_url"
+
+            local temp_dir=$(create_temp_dir)
+            curl -fsSL "$tar_url" -o "$temp_dir/duf.tar.gz"
+
+            if [[ ! -f "$temp_dir/duf.tar.gz" || ! -s "$temp_dir/duf.tar.gz" ]]; then
+                log_error "Failed to download duf"
+                cleanup_temp_dir "$temp_dir"
+                return 1
+            fi
+
+            tar -xzf "$temp_dir/duf.tar.gz" -C "$temp_dir"
+            local duf_bin=$(find "$temp_dir" -name "duf" -type f | head -n1)
+
+            if [[ -z "$duf_bin" ]]; then
+                log_error "duf binary not found in archive"
+                cleanup_temp_dir "$temp_dir"
+                return 1
+            fi
+
+            sudo install -m 755 "$duf_bin" /usr/local/bin/duf
+            cleanup_temp_dir "$temp_dir"
+            ;;
+    esac
+
+    verify_installation duf
+}
+
+install_lazydocker() {
+    log_info "Installing lazydocker..."
+
+    local version=$(get_latest_github_release "jesseduffield/lazydocker")
+    if [[ -z "$version" ]]; then
+        log_error "Failed to get lazydocker version"
+        return 1
+    fi
+
+    local arch=$(get_arch)
+    local os=$(get_os_type)
+
+    # Map architecture - lazydocker uses x86_64 not amd64
+    local ld_arch="$arch"
+    if [[ "$arch" == "amd64" ]]; then
+        ld_arch="x86_64"
+    fi
+
+    local tar_url="https://github.com/jesseduffield/lazydocker/releases/download/${version}/lazydocker_${version#v}_${os}_${ld_arch}.tar.gz"
+    log_info "Downloading from: $tar_url"
+
+    local temp_dir=$(create_temp_dir)
+    curl -fsSL "$tar_url" -o "$temp_dir/lazydocker.tar.gz"
+
+    if [[ ! -f "$temp_dir/lazydocker.tar.gz" || ! -s "$temp_dir/lazydocker.tar.gz" ]]; then
+        log_error "Failed to download lazydocker"
+        cleanup_temp_dir "$temp_dir"
+        return 1
+    fi
+
+    tar -xzf "$temp_dir/lazydocker.tar.gz" -C "$temp_dir"
+
+    local ld_bin=$(find "$temp_dir" -name "lazydocker" -type f | head -n1)
+    if [[ -z "$ld_bin" ]]; then
+        log_error "lazydocker binary not found in archive"
+        cleanup_temp_dir "$temp_dir"
+        return 1
+    fi
+
+    sudo install -m 755 "$ld_bin" /usr/local/bin/lazydocker
+    cleanup_temp_dir "$temp_dir"
+
+    verify_installation lazydocker
+}
+
 install_tldr() {
     log_info "Installing tldr..."
-    
+
     # Install via npm if available, otherwise pip
     if command_exists npm; then
         sudo npm install -g tldr
@@ -374,6 +481,6 @@ install_tldr() {
         pip3 install --user tldr
         add_to_path "$HOME/.local/bin"
     fi
-    
+
     verify_installation tldr
 }
