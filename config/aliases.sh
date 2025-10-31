@@ -284,31 +284,43 @@ alias tka='tmux kill-server'
 # Productivity Aliases
 # ============================================================================
 
-# Better ls
+# Better ls with eza
 if command -v eza &> /dev/null; then
-    alias ls='eza'
-    alias ll='eza -la --git'
-    alias la='eza -a'
-    alias lt='eza --tree'
+    alias ls='eza -lh --group-directories-first --icons=auto'
+    alias lsa='ls -a'
+    alias lt='eza --tree --level=2 --long --icons --git'
+    alias lta='lt -a'
 else
     alias ll='ls -lah'
     alias la='ls -A'
 fi
 
-# Better cat
+# Better cat with bat
 if command -v bat &> /dev/null; then
     alias cat='bat'
     alias ccat='/usr/bin/cat'  # Original cat
 fi
 
-# Better find
+# Better find with fd
 if command -v fd &> /dev/null; then
-    alias find='fd'
+    alias fd='fdfind'
 fi
 
-# Better grep
+# fzf with bat preview
+if command -v fzf &> /dev/null && command -v bat &> /dev/null; then
+    alias ff="fzf --preview 'batcat --style=numbers --color=always {}'"
+elif command -v fzf &> /dev/null; then
+    alias ff="fzf --preview 'cat {}'"
+fi
+
+# Better grep with ripgrep
 if command -v rg &> /dev/null; then
     alias grep='rg'
+fi
+
+# zoxide (modern cd)
+if command -v zoxide &> /dev/null; then
+    alias cd='z'
 fi
 
 # Navigation

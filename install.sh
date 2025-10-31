@@ -82,10 +82,10 @@ list_tools() {
     echo "   stern, ctop, htop, btop"
     
     echo -e "\n${YELLOW}6. Productivity CLI${NC}"
-    echo "   tmux, zsh, fzf, ripgrep, bat, eza, fd, jq, yq, neovim, ncdu, tldr"
-    
+    echo "   tmux, fzf, ripgrep, bat, eza, fd, jq, yq, zoxide, neovim, lazyvim, ncdu, duf, lazydocker, tldr"
+
     echo -e "\n${YELLOW}7. Network & Security${NC}"
-    echo "   nmap, trivy, cosign, openssl"
+    echo "   net-tools, nmap, trivy, cosign, openssl"
     
     echo -e "\n${YELLOW}8. Languages & Runtimes${NC}"
     echo "   python3, node.js, go"

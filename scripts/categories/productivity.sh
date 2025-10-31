@@ -34,7 +34,9 @@ select_productivity_tools() {
         "fd:fd:install_fd"
         "jq:jq:install_jq"
         "yq:yq:install_yq"
+        "zoxide:zoxide:install_zoxide"
         "neovim:nvim:install_neovim"
+        "LazyVim:nvim:install_lazyvim"
         "ncdu:ncdu:install_ncdu"
         "duf:duf:install_duf"
         "lazydocker:lazydocker:install_lazydocker"
@@ -169,10 +171,18 @@ install_all_productivity_tools() {
         install_yq
     fi
 
+    # zoxide (modern cd)
+    if ! is_installed zoxide; then
+        install_zoxide
+    fi
+
     # neovim
     if ! is_installed nvim; then
         install_neovim
     fi
+
+    # LazyVim (requires neovim)
+    install_lazyvim
 
     # ncdu (disk usage)
     if ! is_installed ncdu; then
@@ -347,9 +357,63 @@ install_yq() {
     verify_installation yq
 }
 
+install_zoxide() {
+    log_info "Installing zoxide..."
+
+    local version=$(get_latest_github_release "ajeetdsouza/zoxide")
+    if [[ -z "$version" ]]; then
+        log_error "Failed to get zoxide version"
+        return 1
+    fi
+
+    local arch=$(get_arch)
+    local os=$(get_os_type)
+
+    # zoxide uses x86_64 not amd64
+    local zoxide_arch="$arch"
+    if [[ "$arch" == "amd64" ]]; then
+        zoxide_arch="x86_64"
+    fi
+
+    local tar_url="https://github.com/ajeetdsouza/zoxide/releases/download/${version}/zoxide-${version#v}-${zoxide_arch}-unknown-${os}-musl.tar.gz"
+    log_info "Downloading from: $tar_url"
+
+    local temp_dir=$(create_temp_dir)
+    curl -fsSL "$tar_url" -o "$temp_dir/zoxide.tar.gz"
+
+    if [[ ! -f "$temp_dir/zoxide.tar.gz" || ! -s "$temp_dir/zoxide.tar.gz" ]]; then
+        log_error "Failed to download zoxide"
+        cleanup_temp_dir "$temp_dir"
+        return 1
+    fi
+
+    tar -xzf "$temp_dir/zoxide.tar.gz" -C "$temp_dir"
+
+    # Find zoxide binary
+    local zoxide_bin=$(find "$temp_dir" -name "zoxide" -type f | head -n1)
+    if [[ -z "$zoxide_bin" ]]; then
+        log_error "zoxide binary not found in archive"
+        cleanup_temp_dir "$temp_dir"
+        return 1
+    fi
+
+    sudo install -m 755 "$zoxide_bin" /usr/local/bin/zoxide
+    cleanup_temp_dir "$temp_dir"
+
+    # Add zoxide initialization to .bashrc
+    if ! grep -q "zoxide init" "$HOME/.bashrc" 2>/dev/null; then
+        echo '' >> "$HOME/.bashrc"
+        echo '# zoxide (modern cd)' >> "$HOME/.bashrc"
+        echo 'eval "$(zoxide init bash)"' >> "$HOME/.bashrc"
+        log_success "Added zoxide initialization to .bashrc"
+    fi
+
+    verify_installation zoxide
+}
+
 install_neovim() {
     log_info "Installing neovim..."
-    
+
     case "$OS_FAMILY" in
         debian)
             # Add neovim PPA for latest version
@@ -365,8 +429,46 @@ install_neovim() {
             install_package neovim
             ;;
     esac
-    
+
     verify_installation nvim
+}
+
+install_lazyvim() {
+    log_info "Installing LazyVim..."
+
+    # Check if neovim is installed
+    if ! command_exists nvim; then
+        log_error "Neovim must be installed before LazyVim. Please install neovim first."
+        return 1
+    fi
+
+    # Backup existing nvim config if it exists
+    if [[ -d "$HOME/.config/nvim" ]]; then
+        log_info "Backing up existing nvim config..."
+        mv "$HOME/.config/nvim" "$HOME/.config/nvim.backup.$(date +%Y%m%d_%H%M%S)"
+    fi
+
+    if [[ -d "$HOME/.local/share/nvim" ]]; then
+        mv "$HOME/.local/share/nvim" "$HOME/.local/share/nvim.backup.$(date +%Y%m%d_%H%M%S)"
+    fi
+
+    if [[ -d "$HOME/.local/state/nvim" ]]; then
+        mv "$HOME/.local/state/nvim" "$HOME/.local/state/nvim.backup.$(date +%Y%m%d_%H%M%S)"
+    fi
+
+    if [[ -d "$HOME/.cache/nvim" ]]; then
+        mv "$HOME/.cache/nvim" "$HOME/.cache/nvim.backup.$(date +%Y%m%d_%H%M%S)"
+    fi
+
+    # Clone LazyVim starter
+    log_info "Cloning LazyVim starter configuration..."
+    git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
+
+    # Remove .git folder so user can initialize their own repo
+    rm -rf "$HOME/.config/nvim/.git"
+
+    log_success "LazyVim installed! Run 'nvim' to complete the setup."
+    log_info "LazyVim will install plugins on first launch."
 }
 
 install_ncdu() {

@@ -26,6 +26,7 @@ select_network_security_tools() {
     echo ""
 
     local tools=(
+        "net-tools:ifconfig:install_net_tools"
         "nmap:nmap:install_nmap"
         "trivy:trivy:install_trivy"
         "cosign:cosign:install_cosign"
@@ -120,6 +121,11 @@ select_network_security_tools() {
 }
 
 install_all_network_security_tools() {
+    # net-tools
+    if ! is_installed ifconfig; then
+        install_net_tools
+    fi
+
     # nmap
     if ! is_installed nmap; then
         install_nmap
@@ -139,6 +145,12 @@ install_all_network_security_tools() {
     if ! is_installed openssl; then
         install_openssl
     fi
+}
+
+install_net_tools() {
+    log_info "Installing net-tools..."
+    install_package net-tools
+    verify_installation ifconfig
 }
 
 install_nmap() {
