@@ -416,7 +416,7 @@ tfplan() {
 }
 
 # Git commit and push in one command
-gcp() {
+gcpush() {
     git add -A && git commit -m "$1" && git push
 }
 

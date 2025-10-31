@@ -170,8 +170,8 @@ install_gitlab_cli() {
 
     local version=$(get_latest_github_release "gitlab-org/cli")
     if [[ -z "$version" ]]; then
-        log_error "Failed to get GitLab CLI version"
-        return 1
+        log_warning "Failed to get GitLab CLI version from API, using fallback v1.42.0"
+        version="v1.42.0"
     fi
 
     local arch=$(get_arch)

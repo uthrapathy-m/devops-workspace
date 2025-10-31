@@ -209,10 +209,27 @@ install_fzf() {
         git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
         "$HOME/.fzf/install" --all --no-fish
     else
-        log_info "fzf already installed"
+        log_info "fzf already installed at $HOME/.fzf"
     fi
 
-    verify_installation fzf
+    # Add to PATH
+    add_to_path "$HOME/.fzf/bin"
+
+    # Source fzf completion
+    if ! grep -q "fzf.bash" "$HOME/.bashrc" 2>/dev/null; then
+        echo '[ -f ~/.fzf.bash ] && source ~/.fzf.bash' >> "$HOME/.bashrc"
+    fi
+
+    # Verify - fzf is in ~/.fzf/bin
+    if [[ -f "$HOME/.fzf/bin/fzf" ]]; then
+        export PATH="$HOME/.fzf/bin:$PATH"
+        log_success "fzf installed: $(fzf --version 2>&1 | head -n1)"
+        INSTALLED_TOOLS+=("fzf")
+        return 0
+    else
+        log_error "fzf installation failed"
+        return 1
+    fi
 }
 
 install_ripgrep() {
@@ -477,10 +494,34 @@ install_tldr() {
     # Install via npm if available, otherwise pip
     if command_exists npm; then
         sudo npm install -g tldr
+        verify_installation tldr
     else
-        pip3 install --user tldr
-        add_to_path "$HOME/.local/bin"
-    fi
+        # Ensure python3-pip is installed
+        if ! command_exists pip3; then
+            log_info "Installing python3-pip..."
+            case "$OS_FAMILY" in
+                debian)
+                    sudo apt-get update
+                    sudo apt-get install -y python3-pip
+                    ;;
+                redhat)
+                    sudo $PKG_MANAGER install -y python3-pip
+                    ;;
+                arch)
+                    sudo pacman -S --noconfirm python-pip
+                    ;;
+            esac
+        fi
 
-    verify_installation tldr
+        if command_exists pip3; then
+            pip3 install --user tldr
+            add_to_path "$HOME/.local/bin"
+            # Export PATH immediately for verification
+            export PATH="$HOME/.local/bin:$PATH"
+            verify_installation tldr
+        else
+            log_error "Could not install pip3, skipping tldr"
+            return 1
+        fi
+    fi
 }
