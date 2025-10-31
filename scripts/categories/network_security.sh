@@ -6,28 +6,139 @@
 
 install_network_security() {
     log_info "Installing Network & Security tools..."
-    
+
+    # Check if we should do interactive tool selection
+    if [[ "${INTERACTIVE_TOOLS:-false}" == "true" ]]; then
+        select_network_security_tools
+    else
+        # Install all tools in category
+        install_all_network_security_tools
+    fi
+
+    log_success "Network & Security tools installation complete"
+}
+
+select_network_security_tools() {
+    echo ""
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║     Select Individual Network/Security Tools to Install   ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+
+    local tools=(
+        "nmap:nmap:install_nmap"
+        "trivy:trivy:install_trivy"
+        "cosign:cosign:install_cosign"
+        "openssl:openssl:install_openssl"
+    )
+
+    local selected_tools=()
+
+    PS3="Select tool to install (0 to finish and install, q to quit): "
+
+    while true; do
+        echo ""
+        echo "Currently selected tools:"
+        if [[ ${#selected_tools[@]} -eq 0 ]]; then
+            echo "  (none)"
+        else
+            for tool in "${selected_tools[@]}"; do
+                local tool_name=$(echo "$tool" | cut -d: -f1)
+                echo "  - $tool_name"
+            done
+        fi
+        echo ""
+
+        local menu_options=()
+        for tool_info in "${tools[@]}"; do
+            local tool_name=$(echo "$tool_info" | cut -d: -f1)
+            local tool_cmd=$(echo "$tool_info" | cut -d: -f2)
+
+            # Check if already installed
+            if is_installed "$tool_cmd"; then
+                menu_options+=("$tool_name (already installed)")
+            else
+                menu_options+=("$tool_name")
+            fi
+        done
+
+        menu_options+=("Install All" "Done - Start Installation" "Quit")
+
+        select opt in "${menu_options[@]}"; do
+            if [[ "$REPLY" == "q" ]]; then
+                echo "Installation cancelled."
+                exit 0
+            elif [[ "$REPLY" -ge 1 ]] && [[ "$REPLY" -le ${#tools[@]} ]]; then
+                local tool_index=$((REPLY - 1))
+                local tool_info="${tools[$tool_index]}"
+                local tool_name=$(echo "$tool_info" | cut -d: -f1)
+                local tool_cmd=$(echo "$tool_info" | cut -d: -f2)
+
+                if is_installed "$tool_cmd"; then
+                    echo "  $tool_name is already installed, skipping..."
+                else
+                    selected_tools+=("$tool_info")
+                    echo "  Added: $tool_name"
+                fi
+                break
+            elif [[ "$REPLY" -eq $((${#tools[@]} + 1)) ]]; then
+                # Install All
+                for tool_info in "${tools[@]}"; do
+                    selected_tools+=("$tool_info")
+                done
+                echo "  Added: All tools"
+                break
+            elif [[ "$REPLY" -eq $((${#tools[@]} + 2)) ]]; then
+                # Done - Start Installation
+                if [[ ${#selected_tools[@]} -eq 0 ]]; then
+                    echo "No tools selected. Please select at least one."
+                    break
+                fi
+
+                echo ""
+                log_info "Starting installation of selected tools..."
+                for tool_info in "${selected_tools[@]}"; do
+                    local tool_name=$(echo "$tool_info" | cut -d: -f1)
+                    local tool_cmd=$(echo "$tool_info" | cut -d: -f2)
+                    local install_func=$(echo "$tool_info" | cut -d: -f3)
+
+                    if ! is_installed "$tool_cmd"; then
+                        $install_func
+                    fi
+                done
+                return 0
+            elif [[ "$REPLY" -eq $((${#tools[@]} + 3)) ]]; then
+                # Quit
+                echo "Installation cancelled."
+                exit 0
+            else
+                echo "Invalid option"
+                break
+            fi
+        done
+    done
+}
+
+install_all_network_security_tools() {
     # nmap
     if ! is_installed nmap; then
         install_nmap
     fi
-    
+
     # trivy (container security scanner)
     if ! is_installed trivy; then
         install_trivy
     fi
-    
+
     # cosign (container signing)
     if ! is_installed cosign; then
         install_cosign
     fi
-    
+
     # openssl (usually pre-installed)
     if ! is_installed openssl; then
         install_openssl
     fi
-    
-    log_success "Network & Security tools installation complete"
 }
 
 install_nmap() {
