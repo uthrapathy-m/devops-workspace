@@ -42,12 +42,15 @@ install_cloud_tools() {
 
 install_aws_cli() {
     log_info "Installing AWS CLI v2..."
-    
+
+    # Ensure unzip is available
+    ensure_dependency unzip
+
     local temp_dir=$(create_temp_dir)
     cd "$temp_dir"
-    
+
     local arch=$(uname -m)
-    
+
     if [[ "$arch" == "x86_64" ]]; then
         curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     elif [[ "$arch" == "aarch64" ]]; then
@@ -57,10 +60,10 @@ install_aws_cli() {
         cleanup_temp_dir "$temp_dir"
         return 1
     fi
-    
+
     unzip -q awscliv2.zip
     sudo ./aws/install --update
-    
+
     cleanup_temp_dir "$temp_dir"
     verify_installation aws
 }
@@ -140,22 +143,40 @@ install_gcloud() {
 
 install_terraform() {
     log_info "Installing Terraform..."
-    
+
+    # Ensure required dependencies are available
+    ensure_dependency unzip
+    ensure_dependency jq
+
     local temp_dir=$(create_temp_dir)
     cd "$temp_dir"
-    
+
     # Get latest version
     local version=$(curl -fsSL https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r .current_version)
+
+    if [[ -z "$version" || "$version" == "null" ]]; then
+        log_error "Failed to fetch Terraform version. Using fallback version 1.6.0"
+        version="1.6.0"
+    fi
+
     local arch=$(get_arch)
     local os=$(get_os_type)
-    
+
     local url="https://releases.hashicorp.com/terraform/${version}/terraform_${version}_${os}_${arch}.zip"
-    
+
+    log_info "Downloading Terraform from: $url"
     curl -fsSL "$url" -o terraform.zip
+
+    if [[ ! -f terraform.zip || ! -s terraform.zip ]]; then
+        log_error "Failed to download Terraform"
+        cleanup_temp_dir "$temp_dir"
+        return 1
+    fi
+
     unzip -q terraform.zip
-    
+
     install_binary terraform
-    
+
     cleanup_temp_dir "$temp_dir"
     verify_installation terraform
 }
@@ -174,10 +195,10 @@ install_pulumi() {
 
 install_opentofu() {
     log_info "Installing OpenTofu..."
-    
+
     local temp_dir=$(create_temp_dir)
     cd "$temp_dir"
-    
+
     # Install from package manager if available
     case "$OS_FAMILY" in
         debian)
@@ -185,24 +206,27 @@ install_opentofu() {
             curl -fsSL https://get.opentofu.org/opentofu.gpg | sudo tee /etc/apt/trusted.gpg.d/opentofu.gpg > /dev/null
             curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/opentofu-repo-archive-keyring.gpg
             echo "deb [signed-by=/usr/share/keyrings/opentofu-repo-archive-keyring.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" | sudo tee /etc/apt/sources.list.d/opentofu.list > /dev/null
-            
+
             sudo apt-get update
             sudo apt-get install -y tofu
             ;;
         *)
+            # Ensure unzip is available for manual installation
+            ensure_dependency unzip
+
             # Manual installation
             local version=$(get_latest_github_release "opentofu/opentofu")
             local arch=$(get_arch)
             local os=$(get_os_type)
-            
+
             local url="https://github.com/opentofu/opentofu/releases/download/${version}/tofu_${version#v}_${os}_${arch}.zip"
-            
+
             curl -fsSL "$url" -o tofu.zip
             unzip -q tofu.zip
             install_binary tofu
             ;;
     esac
-    
+
     cleanup_temp_dir "$temp_dir"
     verify_installation tofu
 }

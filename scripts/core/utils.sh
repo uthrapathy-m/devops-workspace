@@ -255,3 +255,63 @@ confirm() {
 is_ci() {
     [[ -n "${CI:-}" ]] || [[ -n "${GITHUB_ACTIONS:-}" ]] || [[ -n "${GITLAB_CI:-}" ]]
 }
+
+# Check and install required dependencies
+ensure_dependency() {
+    local dep=$1
+    local package_name=${2:-$dep}
+
+    if ! command_exists "$dep"; then
+        log_warning "$dep is not installed. Installing $package_name..."
+        install_package "$package_name"
+
+        # Verify it was installed
+        if ! command_exists "$dep"; then
+            log_error "Failed to install $dep"
+            return 1
+        fi
+        log_success "$dep installed successfully"
+    fi
+    return 0
+}
+
+# Install package based on OS family
+install_package() {
+    local package=$1
+
+    case "$OS_FAMILY" in
+        debian)
+            sudo apt-get update -qq
+            sudo apt-get install -y "$package"
+            ;;
+        redhat)
+            sudo $PKG_MANAGER install -y "$package"
+            ;;
+        arch)
+            sudo pacman -S --noconfirm "$package"
+            ;;
+        *)
+            log_error "Unsupported OS family: $OS_FAMILY"
+            return 1
+            ;;
+    esac
+}
+
+# Ensure common dependencies are installed
+ensure_common_dependencies() {
+    log_info "Checking for common dependencies..."
+
+    local deps=(
+        "unzip"
+        "jq"
+        "tar"
+        "gzip"
+        "curl"
+    )
+
+    for dep in "${deps[@]}"; do
+        ensure_dependency "$dep" || log_warning "Could not install $dep, some installations may fail"
+    done
+
+    log_success "Common dependencies check complete"
+}

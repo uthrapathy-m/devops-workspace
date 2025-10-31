@@ -95,25 +95,28 @@ list_tools() {
 
 check_prerequisites() {
     log_info "Checking prerequisites..."
-    
+
     # Check for sudo
     if ! command_exists sudo; then
         log_error "sudo is required but not installed. Please install sudo first."
         exit 1
     fi
-    
+
     # Check for curl or wget
     if ! command_exists curl && ! command_exists wget; then
         log_error "Either curl or wget is required. Installing curl..."
         install_package curl
     fi
-    
+
     # Check for basic build tools
     if ! command_exists make || ! command_exists gcc; then
         log_info "Installing build essentials..."
         install_build_essentials
     fi
-    
+
+    # Check and install common dependencies (unzip, jq, tar, gzip)
+    ensure_common_dependencies
+
     log_success "Prerequisites check complete"
 }
 
