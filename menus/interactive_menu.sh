@@ -67,16 +67,7 @@ show_interactive_menu() {
         echo -e "Selected: ${GREEN}$selected_count${NC} of $total categories"
     }
     
-    # Check if we have dialog or whiptail
-    if command_exists whiptail; then
-        use_whiptail_menu
-        return
-    elif command_exists dialog; then
-        use_dialog_menu
-        return
-    fi
-    
-    # Fallback to simple menu
+    # Always use simple terminal menu (no blue screen UI)
     simple_menu
 }
 
@@ -135,6 +126,10 @@ simple_menu() {
                     
                     echo ""
                     log_info "Starting installation of selected categories..."
+
+                    # Enable interactive tool selection within categories
+                    export INTERACTIVE_TOOLS=true
+
                     for category in "${selected_categories[@]}"; do
                         install_category "$category"
                     done

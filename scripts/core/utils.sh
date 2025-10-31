@@ -164,9 +164,14 @@ add_to_path() {
 verify_installation() {
     local tool=$1
     local version_cmd=${2:-"--version"}
-    
+
     if command_exists "$tool"; then
-        local version=$($tool $version_cmd 2>&1 | head -n1)
+        # Special handling for kubectl which uses different version command
+        if [[ "$tool" == "kubectl" ]]; then
+            local version=$($tool version --client --short 2>&1 | head -n1)
+        else
+            local version=$($tool $version_cmd 2>&1 | head -n1)
+        fi
         log_success "$tool installed: $version"
         INSTALLED_TOOLS+=("$tool")
         return 0
@@ -181,35 +186,38 @@ install_from_github_release() {
     local repo=$1
     local binary_name=$2
     local archive_pattern=$3
-    
+
     log_info "Installing $binary_name from GitHub: $repo"
-    
+
     local version=$(get_latest_github_release "$repo")
     if [[ -z "$version" ]]; then
         log_error "Failed to get latest release version"
         return 1
     fi
-    
+
     local arch=$(get_arch)
     local os=$(get_os_type)
     local temp_dir=$(create_temp_dir)
-    
+
     # Replace placeholders in archive pattern
     archive_pattern="${archive_pattern//\{version\}/$version}"
     archive_pattern="${archive_pattern//\{os\}/$os}"
     archive_pattern="${archive_pattern//\{arch\}/$arch}"
-    
+
     local download_url="https://github.com/$repo/releases/download/$version/$archive_pattern"
-    
+
     log_info "Downloading from: $download_url"
-    
-    if download_file "$download_url" "$temp_dir/archive"; then
+
+    # Keep the original filename with extension
+    local archive_file="$temp_dir/$archive_pattern"
+
+    if download_file "$download_url" "$archive_file"; then
         cd "$temp_dir"
-        extract_archive "archive"
-        
+        extract_archive "$archive_pattern"
+
         # Find binary in extracted files
         local binary_path=$(find . -name "$binary_name" -type f | head -n1)
-        
+
         if [[ -n "$binary_path" ]]; then
             install_binary "$binary_path"
             cleanup_temp_dir "$temp_dir"
