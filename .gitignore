@@ -1,0 +1,31 @@
+# Logs
+*.log
+install.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Backup files
+*.backup
+*.bak
+
+# Test artifacts
+test_output/
+*.test
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# User-specific configuration
+.custom-config
+.local-config
