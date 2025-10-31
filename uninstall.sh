@@ -60,14 +60,15 @@ confirm_uninstall() {
 
 remove_binaries() {
     log_info "Removing installed binaries from /usr/local/bin..."
-    
+
     local binaries=(
-        "kubectl" "k9s" "helm" "kind"
-        "terraform" "tofu" "packer"
-        "argocd" "stern" "ctop"
-        "yq" "cosign" "trivy"
+        "kubectl" "k9s" "helm" "kind" "minikube"
+        "terraform" "tofu" "packer" "pulumi"
+        "argocd" "stern" "ctop" "flux"
+        "yq" "cosign" "trivy" "eza" "zoxide" "duf" "lazydocker"
+        "gh" "glab"
     )
-    
+
     for binary in "${binaries[@]}"; do
         if [[ -f "/usr/local/bin/$binary" ]]; then
             sudo rm -f "/usr/local/bin/$binary"
@@ -78,25 +79,45 @@ remove_binaries() {
 
 remove_configs() {
     log_info "Removing configuration files..."
-    
+
     # Backup before removal
     local backup_dir="$HOME/.devops-workspace-backup-$(date +%Y%m%d_%H%M%S)"
     mkdir -p "$backup_dir"
-    
+
     # Backup and remove .tmux.conf
     if [[ -f "$HOME/.tmux.conf" ]]; then
         cp "$HOME/.tmux.conf" "$backup_dir/"
         rm "$HOME/.tmux.conf"
         log_success "Removed .tmux.conf (backed up to $backup_dir)"
     fi
-    
+
     # Backup and remove .vimrc if it's ours
     if [[ -f "$HOME/.vimrc" ]] && grep -q "DevOps Workspace" "$HOME/.vimrc" 2>/dev/null; then
         cp "$HOME/.vimrc" "$backup_dir/"
         rm "$HOME/.vimrc"
         log_success "Removed .vimrc (backed up to $backup_dir)"
     fi
-    
+
+    # Backup and remove nvim config if it's ours
+    if [[ -f "$HOME/.config/nvim/init.lua" ]] && grep -q "DevOps Neovim" "$HOME/.config/nvim/init.lua" 2>/dev/null; then
+        cp -r "$HOME/.config/nvim" "$backup_dir/" 2>/dev/null || true
+        rm -rf "$HOME/.config/nvim"
+        log_success "Removed nvim config (backed up to $backup_dir)"
+    fi
+
+    # Remove fzf
+    if [[ -d "$HOME/.fzf" ]]; then
+        rm -rf "$HOME/.fzf"
+        log_success "Removed fzf installation"
+    fi
+
+    # Remove lazydocker config
+    if [[ -d "$HOME/.config/lazydocker" ]]; then
+        cp -r "$HOME/.config/lazydocker" "$backup_dir/" 2>/dev/null || true
+        rm -rf "$HOME/.config/lazydocker"
+        log_success "Removed lazydocker config"
+    fi
+
     log_info "Configuration backups saved to: $backup_dir"
 }
 
@@ -111,7 +132,9 @@ remove_shell_modifications() {
             # Remove our additions
             sed -i '/# DevOps Workspace Aliases/d' "$rc_file"
             sed -i '\|devops-workspace.*aliases\.sh|d' "$rc_file"
-            
+            sed -i '/\.fzf\.bash/d' "$rc_file"
+            sed -i '/zoxide init/d' "$rc_file"
+
             log_success "Cleaned $(basename $rc_file)"
         fi
     done

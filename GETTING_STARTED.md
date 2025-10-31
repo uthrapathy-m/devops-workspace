@@ -69,6 +69,7 @@ devops-workspace/
 │
 ├── config/
 │   ├── aliases.sh                🎯 100+ DevOps aliases
+│   ├── init.lua                  ✏️  Neovim configuration
 │   ├── .tmux.conf                🖥️  tmux configuration
 │   └── .vimrc                    ✏️  vim configuration
 │
@@ -78,13 +79,13 @@ devops-workspace/
 │   │   └── utils.sh              🛠️  Utility functions
 │   │
 │   └── categories/               📦 8 tool categories
-│       ├── containers.sh         🐳 Docker, kubectl, k9s, Helm
-│       ├── cloud_tools.sh        ☁️  AWS, Azure, GCloud, Terraform
-│       ├── iac_tools.sh          🏗️  Ansible, Packer, Vagrant
-│       ├── cicd_tools.sh         🔄 GitHub CLI, GitLab CLI, ArgoCD
+│       ├── containers.sh         🐳 Docker, kubectl, k9s, Helm, kind
+│       ├── cloud_tools.sh        ☁️  AWS, Azure, GCloud, DigitalOcean
+│       ├── iac_tools.sh          🏗️  Terraform, Ansible, Pulumi, Packer
+│       ├── cicd_tools.sh         🔄 GitHub CLI, GitLab CLI, ArgoCD, Flux
 │       ├── monitoring.sh         📊 stern, ctop, htop, btop
-│       ├── productivity.sh       ⚡ fzf, ripgrep, bat, eza, jq, yq
-│       ├── network_security.sh   🔒 nmap, trivy, cosign
+│       ├── productivity.sh       ⚡ fzf, bat, eza, zoxide, nvim, lazydocker
+│       ├── network_security.sh   🔒 net-tools, nmap, trivy, cosign
 │       └── languages.sh          💻 Python, Node.js, Go
 │
 ├── menus/
@@ -132,8 +133,9 @@ Choose exactly what you need:
 
 Included dotfiles:
 - **.tmux.conf**: Optimized tmux setup
-- **.vimrc**: DevOps-friendly vim config
-- **aliases.sh**: 100+ practical shortcuts
+- **init.lua**: Productive Neovim config (leader key, LSP-ready, DevOps file types)
+- **.vimrc**: Basic vim config
+- **aliases.sh**: 100+ practical shortcuts with modern tools (eza, zoxide, fzf)
 
 ## 📚 Documentation Guide
 
@@ -231,11 +233,14 @@ gp                           # Push
 
 ## 💡 Pro Tips
 
-1. **Use fzf**: Press `Ctrl+R` for fuzzy command history search
-2. **Use tmux**: Manage multiple terminal sessions
-3. **Use bat**: Better file viewing with syntax highlighting
-4. **Use ripgrep**: Fast code searching across projects
-5. **Customize**: Add personal aliases in `~/.devops-aliases-personal.sh`
+1. **Use fzf**: Press `Ctrl+R` for fuzzy command history search, or `ff` for file preview
+2. **Use zoxide**: Just `cd` to frequently visited directories by name, no full path needed
+3. **Use tmux**: Manage multiple terminal sessions
+4. **Use bat**: Better file viewing with syntax highlighting
+5. **Use eza**: Modern `ls` with icons, git status, and tree view (`lt`)
+6. **Use lazydocker**: TUI for Docker management
+7. **Use neovim**: Configured with leader key (space), DevOps file types, and productive shortcuts
+8. **Customize**: Add personal aliases in `~/.devops-aliases-personal.sh`
 
 ## 🚀 Next Steps
 

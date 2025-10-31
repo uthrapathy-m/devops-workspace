@@ -1,14 +1,15 @@
 # DevOps Workspace Installer
 
-A cross-Linux distribution installer for DevOps engineers. Select and install only the tools you need with an interactive menu system.
+A cross-Linux distribution installer for DevOps engineers. Select and install only the tools you need with an interactive, terminal-based menu system.
 
 ## Features
 
 - 🐧 **Cross-Linux Support**: Works on Ubuntu, Debian, Fedora, CentOS, Arch, and more
-- 🎯 **Selective Installation**: Choose exactly which tools to install
+- 🎯 **Two-Level Selection**: Choose categories, then select individual tools within each
 - 📦 **Categorized Tools**: Organized by Container, Cloud, IaC, CI/CD, Monitoring, Productivity, etc.
-- ⚡ **DevOps Aliases**: Pre-configured bash/zsh aliases for faster workflows
-- 🔧 **Dotfiles Included**: Optimized configurations for tmux, vim, and shell
+- ⚡ **Modern DevOps Aliases**: Pre-configured bash aliases with modern CLI tools (eza, zoxide, fzf)
+- 🔧 **Productive Configs**: Optimized configurations for tmux, neovim, and shell
+- 🚀 **Smart Dependency Management**: Auto-installs required dependencies
 
 ## Quick Start
 
@@ -21,14 +22,38 @@ chmod +x install.sh
 
 ## Tool Categories
 
-- **Containers & Orchestration**: Docker, Podman, kubectl, k9s, Helm, Kind
-- **Cloud CLI Tools**: AWS CLI, Azure CLI, Google Cloud SDK, Terraform, Pulumi
-- **Infrastructure as Code**: Ansible, Packer, Vagrant, OpenTofu
-- **CI/CD**: GitHub CLI, GitLab CLI, ArgoCD CLI
-- **Monitoring**: Prometheus tools, k9s, stern, ctop, htop
-- **Productivity CLI**: fzf, ripgrep, bat, eza, fd, jq, yq, tmux, neovim
-- **Network & Security**: nmap, trivy, cosign, openssl
-- **Languages**: Python3, Node.js, Go
+### 1. Containers & Orchestration
+Docker, Podman, kubectl, k9s, Helm, kind, minikube
+
+### 2. Cloud CLI Tools
+AWS CLI, Azure CLI, Google Cloud SDK, DigitalOcean CLI
+
+### 3. Infrastructure as Code
+Terraform, OpenTofu, Ansible, Pulumi, Packer, Vagrant
+
+### 4. CI/CD & GitOps
+GitHub CLI, GitLab CLI, ArgoCD, Flux
+
+### 5. Monitoring & Observability
+stern, ctop, htop, btop
+
+### 6. Productivity CLI Tools
+- **Terminal multiplexer**: tmux
+- **Fuzzy finder**: fzf
+- **Search**: ripgrep, fd
+- **File viewing**: bat, eza
+- **Data processing**: jq, yq
+- **Modern navigation**: zoxide (smart cd)
+- **Editor**: neovim with productive config, LazyVim
+- **Disk usage**: ncdu, duf
+- **Docker TUI**: lazydocker
+- **Quick docs**: tldr
+
+### 7. Network & Security
+net-tools, nmap, trivy, cosign, openssl
+
+### 8. Languages & Runtimes
+Python3, Node.js, Go
 
 ## Usage
 
@@ -55,9 +80,33 @@ chmod +x install.sh
 
 ## DevOps Aliases
 
-After installation, your shell will have 50+ DevOps aliases. Reload your shell:
+After installation, your shell will have 100+ DevOps aliases. Reload your shell:
 ```bash
-source ~/.bashrc  # or ~/.zshrc
+source ~/.bashrc
+```
+
+### Modern CLI Aliases
+```bash
+ls    # eza with icons and git status
+lt    # tree view with git info
+ff    # fzf with bat preview
+cd    # zoxide (smart cd based on frecency)
+```
+
+### Kubernetes Shortcuts
+```bash
+k     # kubectl
+kgp   # kubectl get pods
+kl    # kubectl logs
+kex   # kubectl exec -it
+```
+
+### Docker Shortcuts
+```bash
+d     # docker
+dps   # docker ps
+dl    # docker logs
+dex   # docker exec -it
 ```
 
 See all aliases:

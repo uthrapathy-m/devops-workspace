@@ -431,6 +431,17 @@ install_neovim() {
     esac
 
     verify_installation nvim
+
+    # Install basic nvim configuration
+    if [[ ! -f "$HOME/.config/nvim/init.lua" ]]; then
+        log_info "Installing basic Neovim configuration..."
+        mkdir -p "$HOME/.config/nvim"
+        cp "${SCRIPT_DIR}/../config/init.lua" "$HOME/.config/nvim/init.lua"
+        mkdir -p "$HOME/.vim/undodir"
+        log_success "Neovim configuration installed at ~/.config/nvim/init.lua"
+    else
+        log_info "Neovim config already exists, skipping..."
+    fi
 }
 
 install_lazyvim() {

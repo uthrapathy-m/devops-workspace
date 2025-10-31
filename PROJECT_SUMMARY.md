@@ -2,16 +2,18 @@
 
 ## Overview
 
-DevOps Workspace is a comprehensive, cross-Linux distribution installer for DevOps engineers. It provides selective installation of 40+ essential DevOps tools with an interactive menu system, pre-configured aliases, and dotfiles.
+DevOps Workspace is a comprehensive, cross-Linux distribution installer for DevOps engineers. It provides selective installation of 50+ essential DevOps tools with a two-level interactive menu system, modern CLI tools, pre-configured aliases, and productive configurations.
 
 ## Key Features
 
 ✅ **Cross-Linux Support**: Ubuntu, Debian, Fedora, CentOS, Rocky, Alma, Arch, Manjaro, openSUSE
-✅ **Selective Installation**: Choose exactly which tools to install
-✅ **100+ DevOps Aliases**: Practical, work-focused shortcuts
-✅ **Interactive Menu**: Easy tool selection with keyboard navigation
+✅ **Two-Level Selection**: Choose categories, then individual tools within each
+✅ **100+ DevOps Aliases**: Practical, work-focused shortcuts with modern tools
+✅ **Simple Terminal Menu**: No blue screens, just straightforward keyboard selection
 ✅ **Category-Based**: Tools organized by function (Containers, Cloud, IaC, CI/CD, etc.)
-✅ **Dotfiles Included**: Pre-configured tmux, vim configurations
+✅ **Modern CLI Tools**: eza, zoxide, fzf, bat, lazydocker, and more
+✅ **Productive Configs**: Neovim with productive setup, tmux, and shell configurations
+✅ **Smart Dependencies**: Auto-installs required tools (unzip, jq, pip3, etc.)
 ✅ **Automated Installation**: GitHub releases, package managers, binary downloads
 ✅ **Uninstaller**: Clean removal with backups
 ✅ **CI/CD Ready**: GitHub Actions workflow included
@@ -28,7 +30,8 @@ devops-workspace/
 ├── uninstall.sh                       # Uninstaller with backups
 │
 ├── config/
-│   ├── aliases.sh                     # 100+ DevOps bash/zsh aliases
+│   ├── aliases.sh                     # 100+ DevOps bash aliases (modern tools)
+│   ├── init.lua                       # Neovim productive configuration
 │   ├── .tmux.conf                     # tmux configuration
 │   └── .vimrc                         # vim configuration
 │
@@ -38,13 +41,13 @@ devops-workspace/
 │   │   └── utils.sh                   # Common utility functions
 │   │
 │   └── categories/
-│       ├── containers.sh              # Docker, kubectl, k9s, Helm, kind
-│       ├── cloud_tools.sh             # AWS, Azure, GCloud, Terraform, Pulumi
-│       ├── iac_tools.sh               # Ansible, Packer, Vagrant
-│       ├── cicd_tools.sh              # GitHub CLI, GitLab CLI, ArgoCD
+│       ├── containers.sh              # Docker, kubectl, k9s, Helm, kind, minikube
+│       ├── cloud_tools.sh             # AWS, Azure, GCloud, DigitalOcean, Terraform
+│       ├── iac_tools.sh               # Terraform, Ansible, Pulumi, Packer, Vagrant
+│       ├── cicd_tools.sh              # GitHub CLI, GitLab CLI, ArgoCD, Flux
 │       ├── monitoring.sh              # stern, ctop, htop, btop
-│       ├── productivity.sh            # fzf, ripgrep, bat, eza, fd, jq, yq, etc.
-│       ├── network_security.sh        # nmap, trivy, cosign
+│       ├── productivity.sh            # fzf, bat, eza, zoxide, nvim, lazydocker, duf
+│       ├── network_security.sh        # net-tools, nmap, trivy, cosign
 │       └── languages.sh               # Python3, Node.js, Go
 │
 ├── menus/
@@ -73,24 +76,27 @@ devops-workspace/
 - k9s (Kubernetes TUI)
 - Helm
 - kind (Kubernetes in Docker)
+- minikube
 
 ### 2. Cloud CLI Tools
 - AWS CLI v2
 - Azure CLI
 - Google Cloud SDK
-- Terraform
-- Pulumi
-- OpenTofu
+- DigitalOcean CLI (doctl)
 
 ### 3. Infrastructure as Code
+- Terraform
+- OpenTofu
 - Ansible
+- Pulumi
 - Packer
 - Vagrant
 
-### 4. CI/CD Tools
+### 4. CI/CD & GitOps Tools
 - GitHub CLI (gh)
 - GitLab CLI (glab)
 - ArgoCD CLI
+- Flux CLI
 
 ### 5. Monitoring & Observability
 - stern (multi-pod log tailing)
@@ -99,22 +105,21 @@ devops-workspace/
 - btop
 
 ### 6. Productivity CLI Tools
-- tmux (terminal multiplexer)
-- zsh + oh-my-zsh
-- fzf (fuzzy finder)
-- ripgrep (fast grep)
-- bat (better cat)
-- eza (better ls)
-- fd (better find)
-- jq (JSON processor)
-- yq (YAML processor)
-- neovim
-- ncdu (disk usage)
-- tldr (simplified man pages)
+- **Terminal**: tmux (multiplexer)
+- **Fuzzy Finder**: fzf (with bat preview)
+- **Search**: ripgrep, fd-find
+- **File Viewing**: bat (better cat), eza (better ls with icons & git)
+- **Navigation**: zoxide (smart cd based on frecency)
+- **Data Processing**: jq (JSON), yq (YAML)
+- **Editor**: neovim (with productive config), LazyVim
+- **Disk Usage**: ncdu, duf (modern df/du)
+- **Docker TUI**: lazydocker
+- **Quick Docs**: tldr (simplified man pages)
 
 ### 7. Network & Security
-- nmap
-- trivy (container scanner)
+- net-tools (ifconfig, netstat)
+- nmap (network scanner)
+- trivy (container/IaC scanner)
 - cosign (container signing)
 - openssl
 
