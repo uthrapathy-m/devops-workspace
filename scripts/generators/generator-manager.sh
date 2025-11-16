@@ -21,6 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GENERATORS_DIR="$SCRIPT_DIR"
 DOCKER_GENERATORS="$GENERATORS_DIR/docker"
 TERRAFORM_GENERATORS="$GENERATORS_DIR/terraform"
+KUBERNETES_GENERATORS="$GENERATORS_DIR/kubernetes"
 
 # Colors for output
 log_info() {
@@ -65,6 +66,8 @@ Commands:
     docker-help         Show Dockerfile generator help
     terraform           Run Terraform generator (interactive)
     terraform-help      Show Terraform generator help
+    kubernetes          Run Kubernetes manifest generator (interactive)
+    kubernetes-help     Show Kubernetes generator help
     check               Check installed generators
     info GENERATOR      Show generator information
     help                Show this help message
@@ -72,16 +75,20 @@ Commands:
 Generators Available:
     docker              Advanced Dockerfile generator (13+ frameworks)
     terraform           Infrastructure as Code generator (AWS EKS, GCP GKE, Azure AKS)
+    kubernetes          Kubernetes manifest generator (production-ready configs)
 
 Examples:
     generator-manager list
     generator-manager docker
     generator-manager terraform
+    generator-manager kubernetes
     generator-manager docker-help
     generator-manager terraform-help
+    generator-manager kubernetes-help
     generator-manager check
     generator-manager info docker
     generator-manager info terraform
+    generator-manager info kubernetes
 
 EOF
 }
@@ -102,8 +109,13 @@ list_generators() {
     echo "                             Modular architecture, networking, databases, monitoring"
     echo ""
 
+    echo -e "${CYAN}🚀 Kubernetes Generators:${NC}"
+    echo "  • k8s-manifest-generator - Generate Kubernetes manifests"
+    echo "                             Deployments, services, ingress, ConfigMaps, Secrets"
+    echo "                             HPA, RBAC, resource limits, health checks"
+    echo ""
+
     echo -e "${YELLOW}Coming Soon:${NC}"
-    echo "  • kubernetes-generator   - Generate Kubernetes manifests"
     echo "  • helm-generator         - Generate Helm charts"
     echo "  • compose-generator      - Advanced Docker Compose configs"
     echo "  • config-generator       - Generate config templates"
@@ -157,6 +169,25 @@ check_generators() {
         echo -e "${YELLOW}! Terraform Generators Directory not found${NC}"
     fi
 
+    # Check Kubernetes generators
+    if [[ -d "$KUBERNETES_GENERATORS" ]]; then
+        echo -e "${GREEN}✓ Kubernetes Generators Directory:${NC} $KUBERNETES_GENERATORS"
+
+        for generator in "$KUBERNETES_GENERATORS"/*-generator.sh; do
+            if [[ -f "$generator" ]]; then
+                if [[ -x "$generator" ]]; then
+                    echo -e "  ${GREEN}✓${NC} $(basename "$generator") (executable)"
+                else
+                    echo -e "  ${YELLOW}!${NC} $(basename "$generator") (not executable)"
+                    echo -e "      Run: chmod +x \"$generator\""
+                fi
+                ((found++))
+            fi
+        done
+    else
+        echo -e "${YELLOW}! Kubernetes Generators Directory not found${NC}"
+    fi
+
     if [[ $found -eq 0 ]]; then
         log_warning "No generators found"
     else
@@ -177,6 +208,81 @@ show_generator_info() {
     local generator=$1
 
     case "$generator" in
+        kubernetes|k8s|k8s-manifest)
+            cat << EOF
+${MAGENTA}Kubernetes Manifest Generator${NC}
+
+${GREEN}Description:${NC}
+  Advanced Kubernetes manifest generator for production-ready deployments
+  with comprehensive configuration options and best practices.
+
+${GREEN}Supported Resources:${NC}
+
+  Core Resources:
+    • Deployments (with replicas and update strategies)
+    • StatefulSets (for stateful applications)
+    • Services (ClusterIP, NodePort, LoadBalancer)
+    • ConfigMaps (application configuration)
+    • Secrets (sensitive data management)
+
+  Advanced Resources:
+    • Ingress (HTTP/HTTPS routing with TLS)
+    • Horizontal Pod Autoscaler (HPA)
+    • PersistentVolumeClaims (data persistence)
+    • RBAC (Role-Based Access Control)
+    • NetworkPolicies (network security)
+
+${GREEN}Features:${NC}
+  ✓ Production-ready manifest generation
+  ✓ Multi-application deployments
+  ✓ Resource limits and requests
+  ✓ Health checks (liveness & readiness probes)
+  ✓ Horizontal auto-scaling (HPA)
+  ✓ RBAC and service accounts
+  ✓ Ingress with TLS support
+  ✓ ConfigMaps and Secrets
+  ✓ PersistentVolume support
+  ✓ Environment variable management
+  ✓ Image pull policies
+  ✓ Namespace management
+
+${GREEN}Usage:${NC}
+  generator-manager kubernetes
+
+${GREEN}Output Files:${NC}
+  • namespace.yaml - Namespace definition
+  • deployment.yaml - Application deployment
+  • service.yaml - Service configuration
+  • configmap.yaml - Configuration data
+  • secret.yaml - Sensitive data
+  • ingress.yaml - Ingress routing (if enabled)
+  • hpa.yaml - Horizontal Pod Autoscaler (if enabled)
+  • pvc.yaml - PersistentVolumeClaim (if enabled)
+  • rbac.yaml - RBAC configuration (if enabled)
+  • README.md - Deployment instructions
+
+${GREEN}Interactive Setup:${NC}
+  1. Enter application name and namespace
+  2. Configure Docker image details
+  3. Set container port and replica count
+  4. Choose optional components:
+     - Ingress with TLS
+     - Horizontal Pod Autoscaler
+     - PersistentVolume Claims
+     - RBAC configuration
+  5. Configure resource limits
+  6. Enable/disable health checks
+
+${YELLOW}Notes:${NC}
+  • Generates production-ready manifests
+  • Follows Kubernetes best practices
+  • Includes health checks by default
+  • Configurable resource limits
+  • RBAC support for security
+  • Complete documentation included
+
+EOF
+            ;;
         terraform|tf|iac)
             cat << EOF
 ${MAGENTA}Terraform Infrastructure as Code Generator${NC}
@@ -377,7 +483,7 @@ EOF
             ;;
         *)
             log_error "Unknown generator: $generator"
-            echo "Available generators: docker, terraform"
+            echo "Available generators: docker, terraform, kubernetes"
             return 1
             ;;
     esac
@@ -495,6 +601,105 @@ ${YELLOW}Tips:${NC}
 EOF
 }
 
+# Run Kubernetes generator
+run_kubernetes_generator() {
+    if [[ ! -f "$KUBERNETES_GENERATORS/k8s-manifest-generator.sh" ]]; then
+        log_error "Kubernetes manifest generator not found"
+        echo "Expected: $KUBERNETES_GENERATORS/k8s-manifest-generator.sh"
+        return 1
+    fi
+
+    if [[ ! -x "$KUBERNETES_GENERATORS/k8s-manifest-generator.sh" ]]; then
+        chmod +x "$KUBERNETES_GENERATORS/k8s-manifest-generator.sh"
+    fi
+
+    log_info "Starting Kubernetes Manifest Generator..."
+    echo ""
+    "$KUBERNETES_GENERATORS/k8s-manifest-generator.sh"
+}
+
+# Show kubernetes generator help
+kubernetes_generator_help() {
+    cat << EOF
+${MAGENTA}Advanced Kubernetes Manifest Generator${NC}
+
+${GREEN}Description:${NC}
+Generate production-ready Kubernetes manifests with comprehensive
+configuration options including deployments, services, ingress, HPA, and RBAC.
+
+${GREEN}Supported Resources:${NC}
+  • Deployments with replicas and update strategies
+  • StatefulSets for stateful applications
+  • Services (ClusterIP, NodePort, LoadBalancer)
+  • ConfigMaps and Secrets
+  • Ingress with TLS support
+  • Horizontal Pod Autoscaler (HPA)
+  • PersistentVolumeClaims (PVC)
+  • RBAC (Roles, RoleBindings, ServiceAccounts)
+  • NetworkPolicies
+
+${GREEN}Features:${NC}
+  • Production-ready manifests
+  • Resource requests and limits
+  • Health checks (liveness & readiness probes)
+  • Auto-scaling configuration
+  • RBAC and security policies
+  • Ingress with TLS certificates
+  • ConfigMaps for application config
+  • Secrets for sensitive data
+  • Data persistence options
+  • Comprehensive documentation
+
+${GREEN}Generated Files:${NC}
+  1. namespace.yaml - Namespace definition
+  2. deployment.yaml - Application deployment
+  3. service.yaml - Service configuration
+  4. configmap.yaml - Configuration data
+  5. secret.yaml - Sensitive credentials
+  6. ingress.yaml - Ingress routing (optional)
+  7. hpa.yaml - Horizontal Pod Autoscaler (optional)
+  8. pvc.yaml - Data persistence (optional)
+  9. rbac.yaml - RBAC configuration (optional)
+  10. README.md - Deployment guide
+
+${GREEN}Usage:${NC}
+  generator-manager kubernetes
+
+${GREEN}Quick Start:${NC}
+  1. Run: generator-manager kubernetes
+  2. Provide application details:
+     - App name, namespace
+     - Docker image and tag
+     - Container port and replicas
+  3. Choose optional features:
+     - Ingress (for external access)
+     - HPA (for auto-scaling)
+     - PVC (for data persistence)
+     - RBAC (for access control)
+  4. Configure resource limits
+  5. Review generated manifests
+  6. Deploy: kubectl apply -f k8s/
+
+${GREEN}Best Practices:${NC}
+  ✓ Always set resource limits
+  ✓ Enable health checks
+  ✓ Use ConfigMaps for config
+  ✓ Use Secrets for credentials
+  ✓ Enable RBAC in production
+  ✓ Use network policies
+  ✓ Enable HPA for scaling
+  ✓ Test in dev before production
+
+${YELLOW}Tips:${NC}
+  • Generated manifests are production-ready
+  • All configurations are well-documented
+  • Customize to match your app needs
+  • Review README for deployment steps
+  • Use namespace for multi-tenancy
+
+EOF
+}
+
 # Show docker generator help
 docker_generator_help() {
     cat << EOF
@@ -594,6 +799,13 @@ main() {
         terraform-help|tf-help)
             display_header
             terraform_generator_help
+            ;;
+        kubernetes|k8s)
+            run_kubernetes_generator
+            ;;
+        kubernetes-help|k8s-help)
+            display_header
+            kubernetes_generator_help
             ;;
         check)
             display_header
