@@ -20,6 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Source core utilities
 source "${SCRIPT_DIR}/scripts/core/detect_os.sh"
 source "${SCRIPT_DIR}/scripts/core/utils.sh"
+source "${SCRIPT_DIR}/scripts/core/nerd-fonts.sh"
 
 # Installation tracking
 INSTALL_LOG="${HOME}/.devops-workspace-install.log"
@@ -65,31 +66,35 @@ EOF
 
 list_tools() {
     echo -e "${GREEN}Available Tool Categories:${NC}\n"
-    
+
     echo -e "${YELLOW}1. Containers & Orchestration${NC}"
     echo "   docker, podman, kubectl, k9s, helm, kind, docker-compose"
-    
+
     echo -e "\n${YELLOW}2. Cloud CLI Tools${NC}"
     echo "   aws-cli, azure-cli, gcloud, terraform, pulumi, opentofu"
-    
+
     echo -e "\n${YELLOW}3. Infrastructure as Code${NC}"
     echo "   ansible, packer, vagrant"
-    
+
     echo -e "\n${YELLOW}4. CI/CD Tools${NC}"
     echo "   github-cli, gitlab-cli, argocd-cli"
-    
+
     echo -e "\n${YELLOW}5. Monitoring & Observability${NC}"
     echo "   stern, ctop, htop, btop"
-    
+
     echo -e "\n${YELLOW}6. Productivity CLI${NC}"
     echo "   tmux, fzf, ripgrep, bat, eza, fd, jq, yq, zoxide, neovim, lazyvim, ncdu, duf, lazydocker, tldr"
 
     echo -e "\n${YELLOW}7. Network & Security${NC}"
     echo "   net-tools, nmap, trivy, cosign, openssl"
-    
+
     echo -e "\n${YELLOW}8. Languages & Runtimes${NC}"
     echo "   python3, node.js, go"
-    
+
+    echo -e "\n${YELLOW}9. Themes & Fonts${NC}"
+    echo "   Nerd Fonts (FiraCode, JetBrains Mono, Hack, Inconsolata)"
+    echo "   Terminal Themes (Dracula, Nord, Gruvbox, Solarized, Tokyo Night, Catppuccin)"
+
     echo ""
 }
 
@@ -188,18 +193,69 @@ setup_aliases() {
 
 setup_dotfiles() {
     log_info "Setting up dotfiles..."
-    
+
     # tmux config
     if [[ -f "${SCRIPT_DIR}/config/.tmux.conf" ]]; then
         cp "${SCRIPT_DIR}/config/.tmux.conf" "$HOME/.tmux.conf"
         log_success "Installed .tmux.conf"
     fi
-    
+
     # vim config
     if [[ -f "${SCRIPT_DIR}/config/.vimrc" ]]; then
         cp "${SCRIPT_DIR}/config/.vimrc" "$HOME/.vimrc"
         log_success "Installed .vimrc"
     fi
+}
+
+setup_themes() {
+    log_info "Setting up themes and fonts..."
+
+    # Copy theme files
+    if [[ -d "${SCRIPT_DIR}/config/themes" ]]; then
+        mkdir -p "$HOME/.devops-workspace"
+        log_info "Installing terminal themes..."
+
+        # Interactive theme selection
+        source "${SCRIPT_DIR}/config/themes/theme-manager.sh"
+
+        echo ""
+        echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${BLUE}║           Select a Terminal Theme                         ║${NC}"
+        echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
+        echo ""
+
+        show_theme_menu
+
+        read -p "Select theme (1-${#THEMES[@]}, or press Enter for dracula): " theme_choice
+
+        if [[ -z "$theme_choice" ]] || [[ $theme_choice -eq 1 ]]; then
+            theme_choice=1
+        fi
+
+        if [[ "$theme_choice" =~ ^[0-9]+$ ]] && [[ $theme_choice -ge 1 ]] && [[ $theme_choice -le ${#THEMES[@]} ]]; then
+            SELECTED_THEME=$(get_theme_name "$theme_choice")
+            if [[ -n "$SELECTED_THEME" ]]; then
+                # Source the theme
+                source "${SCRIPT_DIR}/config/themes/${SELECTED_THEME}.sh"
+                save_theme_config "$SELECTED_THEME" "Default"
+                log_success "Theme selected: $SELECTED_THEME"
+            fi
+        else
+            log_info "Using default theme: dracula"
+            save_theme_config "dracula" "Default"
+        fi
+    fi
+
+    # Install Nerd Fonts
+    echo ""
+    read -p "Install Nerd Fonts? (y/n, default: y): " install_fonts
+
+    if [[ "$install_fonts" != "n" ]]; then
+        install_nerd_fonts
+        verify_nerd_fonts_installation
+    fi
+
+    log_success "Theme and font setup complete"
 }
 
 save_install_log() {
@@ -269,18 +325,24 @@ main() {
         for category in containers cloud_tools iac_tools cicd_tools monitoring productivity network_security languages; do
             install_category "$category"
         done
+        setup_themes
     elif [[ -n "${CATEGORY:-}" ]]; then
-        install_category "$CATEGORY"
+        if [[ "$CATEGORY" == "themes" || "$CATEGORY" == "fonts" ]]; then
+            setup_themes
+        else
+            install_category "$CATEGORY"
+        fi
     else
         # Interactive mode
         source "${SCRIPT_DIR}/menus/interactive_menu.sh"
         show_interactive_menu
     fi
-    
+
     # Setup aliases and dotfiles
     setup_aliases
     setup_dotfiles
-    
+    setup_themes
+
     # Save installation log
     save_install_log
     

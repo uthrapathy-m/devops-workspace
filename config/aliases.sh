@@ -449,4 +449,31 @@ dbp() {
     docker build -t "$tag" . && docker push "$tag"
 }
 
+# ============================================================================
+# Theme Management Aliases
+# ============================================================================
+
+# Source theme switcher if available
+SCRIPT_DIR="${HOME}/.devops-workspace"
+if [[ -f "${SCRIPT_DIR}/../scripts/core/theme-switcher.sh" ]]; then
+    THEME_SWITCHER="${SCRIPT_DIR}/../scripts/core/theme-switcher.sh"
+fi
+
+# Theme switching aliases
+alias theme='${THEME_SWITCHER:-echo "Theme switcher not found"} switch'
+alias theme-dracula='${THEME_SWITCHER:-echo "Theme switcher not found"} switch dracula'
+alias theme-nord='${THEME_SWITCHER:-echo "Theme switcher not found"} switch nord'
+alias theme-gruvbox='${THEME_SWITCHER:-echo "Theme switcher not found"} switch gruvbox'
+alias theme-solarized='${THEME_SWITCHER:-echo "Theme switcher not found"} switch solarized-dark'
+alias theme-tokyo='${THEME_SWITCHER:-echo "Theme switcher not found"} switch tokyo-night'
+alias theme-catppuccin='${THEME_SWITCHER:-echo "Theme switcher not found"} switch catppuccin'
+
+# Font switching aliases
+alias font='${THEME_SWITCHER:-echo "Theme switcher not found"} font'
+
+# Theme preview and info
+alias theme-list='${THEME_SWITCHER:-echo "Theme switcher not found"} list'
+alias theme-preview='${THEME_SWITCHER:-echo "Theme switcher not found"} preview'
+alias font-list='${THEME_SWITCHER:-echo "Theme switcher not found"} list-fonts'
+
 echo "✅ DevOps aliases loaded! Type 'alias' to see all available shortcuts."
