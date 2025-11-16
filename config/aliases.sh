@@ -476,4 +476,29 @@ alias theme-list='${THEME_SWITCHER:-echo "Theme switcher not found"} list'
 alias theme-preview='${THEME_SWITCHER:-echo "Theme switcher not found"} preview'
 alias font-list='${THEME_SWITCHER:-echo "Theme switcher not found"} list-fonts'
 
+# ============================================================================
+# Code & Configuration Generators
+# ============================================================================
+
+# Get generator manager path
+GENERATOR_MANAGER="${HOME}/.devops-workspace/../scripts/generators/generator-manager.sh"
+if [[ ! -f "$GENERATOR_MANAGER" ]]; then
+    # Try alternative path
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+    GENERATOR_MANAGER="$SCRIPT_DIR/scripts/generators/generator-manager.sh"
+fi
+
+# Generator aliases
+alias generator='${GENERATOR_MANAGER:-echo "Generator manager not found"}'
+alias gen='${GENERATOR_MANAGER:-echo "Generator manager not found"}'
+
+# Generator-specific aliases
+alias gen-docker='${GENERATOR_MANAGER:-echo "Generator manager not found"} docker'
+alias gen-list='${GENERATOR_MANAGER:-echo "Generator manager not found"} list'
+alias gen-check='${GENERATOR_MANAGER:-echo "Generator manager not found"} check'
+alias gen-help='${GENERATOR_MANAGER:-echo "Generator manager not found"} help'
+alias gen-info='${GENERATOR_MANAGER:-echo "Generator manager not found"} info'
+alias docker-gen='${GENERATOR_MANAGER:-echo "Generator manager not found"} docker'
+alias dockerfile-gen='${GENERATOR_MANAGER:-echo "Generator manager not found"} docker'
+
 echo "✅ DevOps aliases loaded! Type 'alias' to see all available shortcuts."
