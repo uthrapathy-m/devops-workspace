@@ -23,6 +23,7 @@ DOCKER_GENERATORS="$GENERATORS_DIR/docker"
 TERRAFORM_GENERATORS="$GENERATORS_DIR/terraform"
 KUBERNETES_GENERATORS="$GENERATORS_DIR/kubernetes"
 CICD_GENERATORS="$GENERATORS_DIR/cicd"
+HELM_GENERATORS="$GENERATORS_DIR/helm"
 
 # Colors for output
 log_info() {
@@ -71,6 +72,8 @@ Commands:
     kubernetes-help     Show Kubernetes generator help
     cicd                Run CI/CD pipeline generator (interactive)
     cicd-help           Show CI/CD generator help
+    helm                Run Helm chart generator (interactive)
+    helm-help           Show Helm generator help
     check               Check installed generators
     info GENERATOR      Show generator information
     help                Show this help message
@@ -80,6 +83,7 @@ Generators Available:
     terraform           Infrastructure as Code generator (AWS EKS, GCP GKE, Azure AKS)
     kubernetes          Kubernetes manifest generator (production-ready configs)
     cicd                CI/CD pipeline generator (GitHub, GitLab, Jenkins, Azure, CircleCI)
+    helm                Helm chart generator (multi-environment Kubernetes packages)
 
 Examples:
     generator-manager list
@@ -87,15 +91,18 @@ Examples:
     generator-manager terraform
     generator-manager kubernetes
     generator-manager cicd
+    generator-manager helm
     generator-manager docker-help
     generator-manager terraform-help
     generator-manager kubernetes-help
     generator-manager cicd-help
+    generator-manager helm-help
     generator-manager check
     generator-manager info docker
     generator-manager info terraform
     generator-manager info kubernetes
     generator-manager info cicd
+    generator-manager info helm
 
 EOF
 }
@@ -128,8 +135,13 @@ list_generators() {
     echo "                             Testing, security scanning, Docker builds, K8s deployment"
     echo ""
 
-    echo -e "${YELLOW}Coming Soon:${NC}"
+    echo -e "${CYAN}📦 Package Management:${NC}"
     echo "  • helm-generator         - Generate Helm charts"
+    echo "                             Multi-environment support, values templates, dependencies"
+    echo "                             Ingress, HPA, RBAC, ServiceMonitor, PDB"
+    echo ""
+
+    echo -e "${YELLOW}Coming Soon:${NC}"
     echo "  • compose-generator      - Advanced Docker Compose configs"
     echo "  • config-generator       - Generate config templates"
     echo ""
@@ -220,6 +232,25 @@ check_generators() {
         echo -e "${YELLOW}! CI/CD Generators Directory not found${NC}"
     fi
 
+    # Check Helm generators
+    if [[ -d "$HELM_GENERATORS" ]]; then
+        echo -e "${GREEN}✓ Helm Generators Directory:${NC} $HELM_GENERATORS"
+
+        for generator in "$HELM_GENERATORS"/*-generator.sh; do
+            if [[ -f "$generator" ]]; then
+                if [[ -x "$generator" ]]; then
+                    echo -e "  ${GREEN}✓${NC} $(basename "$generator") (executable)"
+                else
+                    echo -e "  ${YELLOW}!${NC} $(basename "$generator") (not executable)"
+                    echo -e "      Run: chmod +x \"$generator\""
+                fi
+                ((found++))
+            fi
+        done
+    else
+        echo -e "${YELLOW}! Helm Generators Directory not found${NC}"
+    fi
+
     if [[ $found -eq 0 ]]; then
         log_warning "No generators found"
     else
@@ -240,6 +271,101 @@ show_generator_info() {
     local generator=$1
 
     case "$generator" in
+        helm|chart)
+            cat << EOF
+${MAGENTA}Helm Chart Generator${NC}
+
+${GREEN}Description:${NC}
+  Advanced Helm chart generator for production-ready Kubernetes package management
+  with multi-environment support and comprehensive templating.
+
+${GREEN}Supported Application Types:${NC}
+
+  Web Applications:
+    • Frontend applications (React, Vue, Angular)
+    • Full-stack applications
+    • Static site hosting
+
+  Microservices:
+    • API services
+    • RESTful services
+    • gRPC services
+
+  Backend Services:
+    • Worker services
+    • Job processors
+    • Background tasks
+
+  Stateful Applications:
+    • Databases (PostgreSQL, MySQL, MongoDB)
+    • Cache systems (Redis)
+    • Message brokers
+
+  Scheduled Tasks:
+    • CronJobs
+    • Periodic tasks
+    • Batch processing
+
+${GREEN}Features:${NC}
+  ✓ Multi-environment values (dev, staging, prod)
+  ✓ Production-ready chart structure
+  ✓ Helm dependency management
+  ✓ ConfigMap and Secret templating
+  ✓ Service and Ingress configuration
+  ✓ Horizontal Pod Autoscaler (HPA)
+  ✓ Pod Disruption Budgets (PDB)
+  ✓ RBAC and ServiceAccount support
+  ✓ ServiceMonitor for Prometheus
+  ✓ Health checks and probes
+  ✓ Resource requests and limits
+  ✓ Container image management
+  ✓ Chart versioning
+  ✓ Comprehensive documentation
+
+${GREEN}Usage:${NC}
+  generator-manager helm
+
+${GREEN}Output Structure:${NC}
+  • Chart.yaml - Chart metadata
+  • values.yaml - Default values
+  • values-dev.yaml - Development values
+  • values-staging.yaml - Staging values
+  • values-prod.yaml - Production values
+  • templates/deployment.yaml
+  • templates/service.yaml
+  • templates/ingress.yaml
+  • templates/hpa.yaml
+  • templates/pdb.yaml
+  • templates/configmap.yaml
+  • templates/secret.yaml
+  • templates/rbac.yaml
+  • templates/_helpers.tpl
+  • README.md - Chart documentation
+
+${GREEN}Interactive Setup:${NC}
+  1. Enter chart name and versions
+  2. Select application type
+  3. Configure image details
+  4. Set service configuration
+  5. Choose optional features:
+     - Ingress with TLS
+     - HPA for auto-scaling
+     - PDB for disruption handling
+     - ServiceMonitor for monitoring
+     - Database support
+     - Redis support
+  6. Configure multiple environments
+
+${YELLOW}Notes:${NC}
+  • Generates production-ready charts
+  • Multi-environment support
+  • Follows Helm best practices
+  • Full dependency support
+  • Complete documentation
+  • Ready for Helm registry
+
+EOF
+            ;;
         cicd|ci-cd|pipeline)
             cat << EOF
 ${MAGENTA}CI/CD Pipeline Generator${NC}
@@ -612,7 +738,7 @@ EOF
             ;;
         *)
             log_error "Unknown generator: $generator"
-            echo "Available generators: docker, terraform, kubernetes, cicd"
+            echo "Available generators: docker, terraform, kubernetes, cicd, helm"
             return 1
             ;;
     esac
@@ -930,6 +1056,113 @@ ${YELLOW}Tips:${NC}
 EOF
 }
 
+# Run Helm generator
+run_helm_generator() {
+    if [[ ! -f "$HELM_GENERATORS/helm-generator.sh" ]]; then
+        log_error "Helm chart generator not found"
+        echo "Expected: $HELM_GENERATORS/helm-generator.sh"
+        return 1
+    fi
+
+    if [[ ! -x "$HELM_GENERATORS/helm-generator.sh" ]]; then
+        chmod +x "$HELM_GENERATORS/helm-generator.sh"
+    fi
+
+    log_info "Starting Helm Chart Generator..."
+    echo ""
+    "$HELM_GENERATORS/helm-generator.sh"
+}
+
+# Show Helm generator help
+helm_generator_help() {
+    cat << EOF
+${MAGENTA}Advanced Helm Chart Generator${NC}
+
+${GREEN}Description:${NC}
+Generate production-ready Helm charts with multi-environment support,
+comprehensive templating, and Kubernetes package management best practices.
+
+${GREEN}Supported Application Types:${NC}
+  1. Web Applications (Frontend/Backend)
+  2. Microservice APIs
+  3. Worker/Job Processors
+  4. Stateful Applications (Databases)
+  5. Scheduled Tasks (CronJobs)
+
+${GREEN}Features:${NC}
+  • Multi-environment values (dev/staging/production)
+  • Production-ready chart structure
+  • Helm dependency management
+  • ConfigMap and Secret templating
+  • Service and Ingress configuration
+  • Horizontal Pod Autoscaler (HPA)
+  • Pod Disruption Budgets (PDB)
+  • RBAC and ServiceAccount support
+  • ServiceMonitor for Prometheus
+  • Health checks and probes
+  • Container image management
+  • Chart versioning
+  • Comprehensive documentation
+
+${GREEN}Generated Files:${NC}
+  1. Chart.yaml - Chart metadata
+  2. values.yaml - Default values
+  3. values-dev.yaml - Development environment
+  4. values-staging.yaml - Staging environment
+  5. values-prod.yaml - Production environment
+  6. templates/deployment.yaml
+  7. templates/service.yaml
+  8. templates/ingress.yaml
+  9. templates/hpa.yaml
+  10. templates/pdb.yaml
+  11. templates/configmap.yaml
+  12. templates/secret.yaml
+  13. templates/rbac.yaml
+  14. README.md - Chart documentation
+
+${GREEN}Usage:${NC}
+  generator-manager helm
+
+${GREEN}Quick Start:${NC}
+  1. Run: generator-manager helm
+  2. Enter chart name and versions
+  3. Select application type
+  4. Configure Docker image
+  5. Set service details
+  6. Choose optional features:
+     - Ingress with TLS
+     - Horizontal Pod Autoscaler
+     - Pod Disruption Budgets
+     - ServiceMonitor for monitoring
+     - Database support
+     - Redis support
+  7. Configure multiple environment values
+  8. Review generated chart
+  9. Test with: helm install my-release ./my-chart
+  10. Package with: helm package ./my-chart
+
+${GREEN}Best Practices:${NC}
+  ✓ Follow semantic versioning for charts
+  ✓ Use appropriate resource limits
+  ✓ Configure health checks
+  ✓ Use ConfigMaps for configuration
+  ✓ Use Secrets for sensitive data
+  ✓ Enable RBAC for security
+  ✓ Implement HPA for scaling
+  ✓ Test charts thoroughly
+  ✓ Document all values
+  ✓ Use ServiceMonitor for observability
+
+${YELLOW}Tips:${NC}
+  • Generated charts are production-ready
+  • Supports multiple environments
+  • Complete Helm best practices included
+  • Ready for Helm registries
+  • Comprehensive documentation
+
+EOF
+}
+
 # Show docker generator help
 docker_generator_help() {
     cat << EOF
@@ -1043,6 +1276,13 @@ main() {
         cicd-help|ci-cd-help)
             display_header
             cicd_generator_help
+            ;;
+        helm)
+            run_helm_generator
+            ;;
+        helm-help)
+            display_header
+            helm_generator_help
             ;;
         check)
             display_header
