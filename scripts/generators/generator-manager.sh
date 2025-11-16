@@ -24,6 +24,7 @@ TERRAFORM_GENERATORS="$GENERATORS_DIR/terraform"
 KUBERNETES_GENERATORS="$GENERATORS_DIR/kubernetes"
 CICD_GENERATORS="$GENERATORS_DIR/cicd"
 HELM_GENERATORS="$GENERATORS_DIR/helm"
+OBSERVABILITY_GENERATORS="$GENERATORS_DIR/observability"
 
 # Colors for output
 log_info() {
@@ -74,6 +75,8 @@ Commands:
     cicd-help           Show CI/CD generator help
     helm                Run Helm chart generator (interactive)
     helm-help           Show Helm generator help
+    observability       Run observability stack generator (interactive)
+    observability-help  Show observability generator help
     check               Check installed generators
     info GENERATOR      Show generator information
     help                Show this help message
@@ -84,6 +87,7 @@ Generators Available:
     kubernetes          Kubernetes manifest generator (production-ready configs)
     cicd                CI/CD pipeline generator (GitHub, GitLab, Jenkins, Azure, CircleCI)
     helm                Helm chart generator (multi-environment Kubernetes packages)
+    observability       Monitoring & observability stack generator (Prometheus, Grafana, ELK, Jaeger)
 
 Examples:
     generator-manager list
@@ -92,17 +96,20 @@ Examples:
     generator-manager kubernetes
     generator-manager cicd
     generator-manager helm
+    generator-manager observability
     generator-manager docker-help
     generator-manager terraform-help
     generator-manager kubernetes-help
     generator-manager cicd-help
     generator-manager helm-help
+    generator-manager observability-help
     generator-manager check
     generator-manager info docker
     generator-manager info terraform
     generator-manager info kubernetes
     generator-manager info cicd
     generator-manager info helm
+    generator-manager info observability
 
 EOF
 }
@@ -139,6 +146,12 @@ list_generators() {
     echo "  • helm-generator         - Generate Helm charts"
     echo "                             Multi-environment support, values templates, dependencies"
     echo "                             Ingress, HPA, RBAC, ServiceMonitor, PDB"
+    echo ""
+
+    echo -e "${CYAN}📊 Observability:${NC}"
+    echo "  • observability-generator - Generate monitoring & observability stack"
+    echo "                             Prometheus, Grafana, ELK, Loki, Jaeger, AlertManager"
+    echo "                             Complete monitoring infrastructure, dashboards, alerts"
     echo ""
 
     echo -e "${YELLOW}Coming Soon:${NC}"
@@ -251,6 +264,25 @@ check_generators() {
         echo -e "${YELLOW}! Helm Generators Directory not found${NC}"
     fi
 
+    # Check Observability generators
+    if [[ -d "$OBSERVABILITY_GENERATORS" ]]; then
+        echo -e "${GREEN}✓ Observability Generators Directory:${NC} $OBSERVABILITY_GENERATORS"
+
+        for generator in "$OBSERVABILITY_GENERATORS"/*-generator.sh; do
+            if [[ -f "$generator" ]]; then
+                if [[ -x "$generator" ]]; then
+                    echo -e "  ${GREEN}✓${NC} $(basename "$generator") (executable)"
+                else
+                    echo -e "  ${YELLOW}!${NC} $(basename "$generator") (not executable)"
+                    echo -e "      Run: chmod +x \"$generator\""
+                fi
+                ((found++))
+            fi
+        done
+    else
+        echo -e "${YELLOW}! Observability Generators Directory not found${NC}"
+    fi
+
     if [[ $found -eq 0 ]]; then
         log_warning "No generators found"
     else
@@ -271,6 +303,78 @@ show_generator_info() {
     local generator=$1
 
     case "$generator" in
+        observability|monitoring|obs)
+            cat << EOF
+${MAGENTA}Observability & Monitoring Stack Generator${NC}
+
+${GREEN}Description:${NC}
+  Advanced observability stack generator for complete monitoring infrastructure
+  with metrics, logs, traces, and alerting capabilities.
+
+${GREEN}Supported Stack Components:${NC}
+
+  Metrics & Visualization:
+    • Prometheus (metrics collection)
+    • Grafana (visualization and dashboards)
+    • AlertManager (alert routing and management)
+    • Custom dashboards for Kubernetes
+
+  Logging Solutions:
+    • ELK Stack (Elasticsearch, Logstash, Kibana)
+    • EFK Stack (Elasticsearch, Fluent Bit, Kibana)
+    • Loki (log aggregation for Kubernetes)
+
+  Distributed Tracing:
+    • Jaeger (end-to-end tracing)
+    • Tempo (scalable tracing backend)
+    • OpenTelemetry instrumentation
+
+${GREEN}Features:${NC}
+  ✓ Complete observability stack generation
+  ✓ Multi-component configurations
+  ✓ Kubernetes-native deployments
+  ✓ Pre-configured dashboards
+  ✓ Alert rules and notification setup
+  ✓ Log aggregation and analysis
+  ✓ Distributed tracing support
+  ✓ Storage configuration
+  ✓ Retention policies
+  ✓ High-availability setup
+  ✓ Integration with existing systems
+  ✓ Comprehensive documentation
+
+${GREEN}Usage:${NC}
+  generator-manager observability
+
+${GREEN}Output Structure:${NC}
+  • prometheus/ - Prometheus configuration
+  • grafana/ - Grafana dashboards and datasources
+  • alertmanager/ - Alert rules and routing
+  • logging/ - ELK/EFK or Loki configuration
+  • tracing/ - Jaeger/Tempo configuration
+  • kubernetes/ - K8s manifests for full stack
+  • helm-charts/ - Helm charts for components
+  • docker-compose.yml - Local deployment
+  • README.md - Complete documentation
+
+${GREEN}Interactive Setup:${NC}
+  1. Choose stack type (complete, metrics, logging, tracing)
+  2. Select deployment method (Kubernetes, Docker Compose)
+  3. Choose logging backend (ELK, EFK, Loki)
+  4. Choose tracing backend (Jaeger, Tempo)
+  5. Configure storage and retention
+  6. Set up alerting rules
+  7. Configure dashboards
+
+${YELLOW}Notes:${NC}
+  • Generates production-ready configurations
+  • Multi-component support
+  • Fully integrated observability
+  • Comprehensive documentation
+  • Ready for production deployment
+
+EOF
+            ;;
         helm|chart)
             cat << EOF
 ${MAGENTA}Helm Chart Generator${NC}
@@ -738,7 +842,7 @@ EOF
             ;;
         *)
             log_error "Unknown generator: $generator"
-            echo "Available generators: docker, terraform, kubernetes, cicd, helm"
+            echo "Available generators: docker, terraform, kubernetes, cicd, helm, observability"
             return 1
             ;;
     esac
@@ -1163,6 +1267,111 @@ ${YELLOW}Tips:${NC}
 EOF
 }
 
+# Run Observability generator
+run_observability_generator() {
+    if [[ ! -f "$OBSERVABILITY_GENERATORS/observability-generator.sh" ]]; then
+        log_error "Observability generator not found"
+        echo "Expected: $OBSERVABILITY_GENERATORS/observability-generator.sh"
+        return 1
+    fi
+
+    if [[ ! -x "$OBSERVABILITY_GENERATORS/observability-generator.sh" ]]; then
+        chmod +x "$OBSERVABILITY_GENERATORS/observability-generator.sh"
+    fi
+
+    log_info "Starting Observability Stack Generator..."
+    echo ""
+    "$OBSERVABILITY_GENERATORS/observability-generator.sh"
+}
+
+# Show observability generator help
+observability_generator_help() {
+    cat << EOF
+${MAGENTA}Advanced Observability & Monitoring Stack Generator${NC}
+
+${GREEN}Description:${NC}
+Generate complete observability infrastructure with metrics, logs, traces,
+and alerting for production Kubernetes environments.
+
+${GREEN}Stack Options:${NC}
+  1. Complete Stack - All components (Prometheus, Grafana, ELK, Jaeger, AlertManager)
+  2. Metrics Only - Prometheus + Grafana + AlertManager
+  3. Logging Only - ELK/EFK or Loki
+  4. Tracing Only - Jaeger or Tempo
+  5. Custom - Choose individual components
+
+${GREEN}Supported Components:${NC}
+  • Prometheus - Time-series metrics database
+  • Grafana - Visualization and dashboards
+  • AlertManager - Alert routing and grouping
+  • Elasticsearch - Log storage and indexing
+  • Kibana - Log visualization
+  • Logstash/Fluent Bit - Log collection
+  • Loki - Kubernetes-native log aggregation
+  • Jaeger - Distributed tracing
+  • Tempo - Scalable tracing backend
+
+${GREEN}Features:${NC}
+  • Production-ready configurations
+  • Kubernetes manifests included
+  • Helm charts for easy deployment
+  • Pre-configured dashboards
+  • Alert rules templates
+  • Storage configuration
+  • Retention policy setup
+  • High-availability support
+  • Multi-environment support
+  • Docker Compose for local testing
+  • Comprehensive documentation
+
+${GREEN}Generated Files:${NC}
+  1. prometheus/ - Prometheus config and rules
+  2. grafana/ - Grafana dashboards
+  3. alertmanager/ - Alert configuration
+  4. logging/ - ELK/EFK or Loki setup
+  5. tracing/ - Jaeger/Tempo configuration
+  6. kubernetes/ - K8s manifests
+  7. helm-charts/ - Helm charts
+  8. docker-compose.yml - Local stack
+  9. README.md - Documentation
+
+${GREEN}Usage:${NC}
+  generator-manager observability
+
+${GREEN}Quick Start:${NC}
+  1. Run: generator-manager observability
+  2. Choose stack type (complete, metrics, logging, tracing, custom)
+  3. Select deployment method (Kubernetes or Docker Compose)
+  4. Choose logging backend (ELK, EFK, or Loki)
+  5. Select tracing backend (Jaeger or Tempo)
+  6. Configure storage and retention
+  7. Set up alerting rules
+  8. Review generated configurations
+  9. Deploy to your environment
+
+${GREEN}Best Practices:${NC}
+  ✓ Start with complete stack in dev environment
+  ✓ Separate metrics, logs, and traces storage
+  ✓ Configure appropriate retention policies
+  ✓ Set up meaningful alert rules
+  ✓ Create custom dashboards for your apps
+  ✓ Enable authentication in production
+  ✓ Use persistent volumes for storage
+  ✓ Monitor the monitoring stack itself
+  ✓ Document all customizations
+  ✓ Test alert routing and notifications
+
+${YELLOW}Tips:${NC}
+  • Generated configs are production-ready
+  • Fully integrated observability stack
+  • Supports Kubernetes and Docker Compose
+  • Includes example dashboards
+  • Pre-configured alert rules
+  • Complete documentation
+
+EOF
+}
+
 # Show docker generator help
 docker_generator_help() {
     cat << EOF
@@ -1283,6 +1492,13 @@ main() {
         helm-help)
             display_header
             helm_generator_help
+            ;;
+        observability)
+            run_observability_generator
+            ;;
+        observability-help)
+            display_header
+            observability_generator_help
             ;;
         check)
             display_header
