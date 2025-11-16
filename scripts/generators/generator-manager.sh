@@ -22,6 +22,7 @@ GENERATORS_DIR="$SCRIPT_DIR"
 DOCKER_GENERATORS="$GENERATORS_DIR/docker"
 TERRAFORM_GENERATORS="$GENERATORS_DIR/terraform"
 KUBERNETES_GENERATORS="$GENERATORS_DIR/kubernetes"
+CICD_GENERATORS="$GENERATORS_DIR/cicd"
 
 # Colors for output
 log_info() {
@@ -68,6 +69,8 @@ Commands:
     terraform-help      Show Terraform generator help
     kubernetes          Run Kubernetes manifest generator (interactive)
     kubernetes-help     Show Kubernetes generator help
+    cicd                Run CI/CD pipeline generator (interactive)
+    cicd-help           Show CI/CD generator help
     check               Check installed generators
     info GENERATOR      Show generator information
     help                Show this help message
@@ -76,19 +79,23 @@ Generators Available:
     docker              Advanced Dockerfile generator (13+ frameworks)
     terraform           Infrastructure as Code generator (AWS EKS, GCP GKE, Azure AKS)
     kubernetes          Kubernetes manifest generator (production-ready configs)
+    cicd                CI/CD pipeline generator (GitHub, GitLab, Jenkins, Azure, CircleCI)
 
 Examples:
     generator-manager list
     generator-manager docker
     generator-manager terraform
     generator-manager kubernetes
+    generator-manager cicd
     generator-manager docker-help
     generator-manager terraform-help
     generator-manager kubernetes-help
+    generator-manager cicd-help
     generator-manager check
     generator-manager info docker
     generator-manager info terraform
     generator-manager info kubernetes
+    generator-manager info cicd
 
 EOF
 }
@@ -113,6 +120,12 @@ list_generators() {
     echo "  • k8s-manifest-generator - Generate Kubernetes manifests"
     echo "                             Deployments, services, ingress, ConfigMaps, Secrets"
     echo "                             HPA, RBAC, resource limits, health checks"
+    echo ""
+
+    echo -e "${CYAN}⚙️  CI/CD Generators:${NC}"
+    echo "  • cicd-generator         - Generate CI/CD pipelines"
+    echo "                             GitHub Actions, GitLab CI/CD, Jenkins, Azure DevOps, CircleCI"
+    echo "                             Testing, security scanning, Docker builds, K8s deployment"
     echo ""
 
     echo -e "${YELLOW}Coming Soon:${NC}"
@@ -188,6 +201,25 @@ check_generators() {
         echo -e "${YELLOW}! Kubernetes Generators Directory not found${NC}"
     fi
 
+    # Check CI/CD generators
+    if [[ -d "$CICD_GENERATORS" ]]; then
+        echo -e "${GREEN}✓ CI/CD Generators Directory:${NC} $CICD_GENERATORS"
+
+        for generator in "$CICD_GENERATORS"/*-generator.sh; do
+            if [[ -f "$generator" ]]; then
+                if [[ -x "$generator" ]]; then
+                    echo -e "  ${GREEN}✓${NC} $(basename "$generator") (executable)"
+                else
+                    echo -e "  ${YELLOW}!${NC} $(basename "$generator") (not executable)"
+                    echo -e "      Run: chmod +x \"$generator\""
+                fi
+                ((found++))
+            fi
+        done
+    else
+        echo -e "${YELLOW}! CI/CD Generators Directory not found${NC}"
+    fi
+
     if [[ $found -eq 0 ]]; then
         log_warning "No generators found"
     else
@@ -208,6 +240,103 @@ show_generator_info() {
     local generator=$1
 
     case "$generator" in
+        cicd|ci-cd|pipeline)
+            cat << EOF
+${MAGENTA}CI/CD Pipeline Generator${NC}
+
+${GREEN}Description:${NC}
+  Advanced CI/CD pipeline generator supporting 5 major platforms
+  with production-ready configurations and best practices.
+
+${GREEN}Supported CI/CD Platforms:${NC}
+
+  GitHub Actions:
+    • Workflow automation
+    • Multi-environment deployments
+    • Docker image building and pushing
+    • Kubernetes deployment
+    • PR/issue automation
+
+  GitLab CI/CD:
+    • Complete pipeline stages
+    • Docker container registry
+    • Kubernetes integration
+    • Artifact management
+    • Environment-based deployment
+
+  Jenkins:
+    • Declarative pipelines
+    • Multi-stage builds
+    • Docker integration
+    • Kubernetes deployment
+    • Post-build actions
+
+  Azure DevOps:
+    • Multi-stage YAML pipelines
+    • Azure Container Registry
+    • Azure Kubernetes Service integration
+    • Release management
+    • Environment approvals
+
+  CircleCI:
+    • Job-based workflows
+    • Docker executors
+    • Kubernetes deployment
+    • Artifact storage
+    • Approval workflows
+
+${GREEN}Features:${NC}
+  ✓ Multi-platform pipeline generation
+  ✓ Automated testing (unit, integration)
+  ✓ Linting and code quality checks
+  ✓ Security scanning (SAST)
+  ✓ Dependency scanning
+  ✓ Docker image building
+  ✓ Image registry pushing
+  ✓ Kubernetes deployment
+  ✓ Environment management (dev/staging/prod)
+  ✓ Health checks and smoke tests
+  ✓ Rollback capabilities
+  ✓ Notifications and reporting
+  ✓ SonarQube integration
+  ✓ Container scanning
+  ✓ Comprehensive documentation
+
+${GREEN}Usage:${NC}
+  generator-manager cicd
+
+${GREEN}Output Files:${NC}
+  • .github/workflows/*.yml (GitHub Actions)
+  • .gitlab-ci.yml (GitLab CI/CD)
+  • Jenkinsfile (Jenkins)
+  • azure-pipelines.yml (Azure DevOps)
+  • .circleci/config.yml (CircleCI)
+  • README.md - Pipeline documentation
+  • scripts/deploy.sh - Deployment helper
+  • scripts/rollback.sh - Rollback helper
+
+${GREEN}Interactive Setup:${NC}
+  1. Select CI/CD platform(s)
+  2. Configure project details
+  3. Select programming language
+  4. Choose deployment method
+  5. Configure environment variables
+  6. Enable optional features:
+     - Testing frameworks
+     - Code quality checks
+     - Security scanning
+     - SonarQube integration
+
+${YELLOW}Notes:${NC}
+  • Generates production-ready pipelines
+  ✓ Supports multiple platforms
+  • Includes security scanning
+  • Automatic Docker builds
+  • Kubernetes deployment ready
+  • Complete documentation
+
+EOF
+            ;;
         kubernetes|k8s|k8s-manifest)
             cat << EOF
 ${MAGENTA}Kubernetes Manifest Generator${NC}
@@ -483,7 +612,7 @@ EOF
             ;;
         *)
             log_error "Unknown generator: $generator"
-            echo "Available generators: docker, terraform, kubernetes"
+            echo "Available generators: docker, terraform, kubernetes, cicd"
             return 1
             ;;
     esac
@@ -700,6 +829,107 @@ ${YELLOW}Tips:${NC}
 EOF
 }
 
+# Run CI/CD generator
+run_cicd_generator() {
+    if [[ ! -f "$CICD_GENERATORS/cicd-generator.sh" ]]; then
+        log_error "CI/CD generator not found"
+        echo "Expected: $CICD_GENERATORS/cicd-generator.sh"
+        return 1
+    fi
+
+    if [[ ! -x "$CICD_GENERATORS/cicd-generator.sh" ]]; then
+        chmod +x "$CICD_GENERATORS/cicd-generator.sh"
+    fi
+
+    log_info "Starting CI/CD Pipeline Generator..."
+    echo ""
+    "$CICD_GENERATORS/cicd-generator.sh"
+}
+
+# Show CI/CD generator help
+cicd_generator_help() {
+    cat << EOF
+${MAGENTA}Advanced CI/CD Pipeline Generator${NC}
+
+${GREEN}Description:${NC}
+Generate production-ready CI/CD pipelines for GitHub Actions, GitLab CI/CD,
+Jenkins, Azure DevOps, and CircleCI with automated testing and deployment.
+
+${GREEN}Supported CI/CD Platforms:${NC}
+  1. GitHub Actions - Workflow-based automation
+  2. GitLab CI/CD - Stage-based pipelines
+  3. Jenkins - Declarative pipelines
+  4. Azure DevOps - Multi-stage YAML pipelines
+  5. CircleCI - Job-based workflows
+
+${GREEN}Features:${NC}
+  • Multi-platform pipeline generation
+  • Automated testing (unit, integration, e2e)
+  • Code quality checks (linting, formatting)
+  • Security scanning (SAST, dependency scanning)
+  • Docker image building and registry push
+  • Kubernetes deployment automation
+  • Environment management (dev/staging/production)
+  • Health checks and smoke tests
+  • Rollback capabilities
+  • Approval workflows
+  • SonarQube integration
+  • Container scanning
+  • Comprehensive documentation
+
+${GREEN}Generated Files:${NC}
+  1. .github/workflows/ci-cd.yml - GitHub Actions
+  2. .gitlab-ci.yml - GitLab CI/CD
+  3. Jenkinsfile - Jenkins pipeline
+  4. azure-pipelines.yml - Azure DevOps
+  5. .circleci/config.yml - CircleCI
+  6. scripts/deploy.sh - Deployment helper
+  7. scripts/rollback.sh - Rollback helper
+  8. README.md - Pipeline documentation
+
+${GREEN}Usage:${NC}
+  generator-manager cicd
+
+${GREEN}Quick Start:${NC}
+  1. Run: generator-manager cicd
+  2. Select CI/CD platform (or all)
+  3. Configure project details:
+     - Project name
+     - Repository URL
+     - Programming language
+  4. Choose deployment method:
+     - Docker + Kubernetes
+     - Cloud-native
+     - Traditional VM
+  5. Enable optional features:
+     - Testing frameworks
+     - Code quality checks
+     - Security scanning
+     - SonarQube
+  6. Review generated pipeline files
+  7. Push to repository and verify
+
+${GREEN}Best Practices:${NC}
+  ✓ Test pipelines in dev environment first
+  ✓ Enable security scanning for all stages
+  ✓ Use environment approvals for production
+  ✓ Implement rollback capabilities
+  ✓ Monitor pipeline execution
+  ✓ Keep secrets in CI/CD vault
+  ✓ Use semantic versioning
+  ✓ Document pipeline stages
+
+${YELLOW}Tips:${NC}
+  • Generated pipelines are production-ready
+  • All platforms fully integrated
+  • Security scanning enabled by default
+  • Container registry compatible
+  • Kubernetes deployment ready
+  • Complete documentation included
+
+EOF
+}
+
 # Show docker generator help
 docker_generator_help() {
     cat << EOF
@@ -806,6 +1036,13 @@ main() {
         kubernetes-help|k8s-help)
             display_header
             kubernetes_generator_help
+            ;;
+        cicd|ci-cd)
+            run_cicd_generator
+            ;;
+        cicd-help|ci-cd-help)
+            display_header
+            cicd_generator_help
             ;;
         check)
             display_header
